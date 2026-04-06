@@ -59,7 +59,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxIndex]);
 
-  // FUNCIÓN PARA AÑADIR A LA BOLSA
+  // FUNCIÓN PARA AÑADIR A LA BOLSA (CORREGIDA AL ESPAÑOL)
   const handleAddToCart = () => {
     if (!tallaSeleccionada) {
       setErrorTalla(true);
@@ -67,19 +67,21 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     }
     setErrorTalla(false);
     
+    // Aquí es donde residía el error de comunicación:
+    // Se han reemplazado 'name', 'price', 'size' e 'image' por sus equivalentes en español
     addToCart({
       id: productoSimulado.id,
-      name: productoSimulado.nombre,
-      price: productoSimulado.precioNumerico,
-      size: tallaSeleccionada,
-      image: productoSimulado.imagenes[0],
-      quantity: 1
+      nombre: productoSimulado.nombre,
+      precio: productoSimulado.precioNumerico,
+      talla: tallaSeleccionada,
+      img: productoSimulado.imagenes[0],
+      cantidad: 1
     });
   };
 
   return (
     <main className="bg-black min-h-screen w-full text-white pt-24 pb-20">
-      <div className="w-full max-w-450 mx-auto px-4 md:px-8 flex flex-col md:flex-row gap-6 md:gap-12">
+      <div className="w-full max-w-[1450px] mx-auto px-4 md:px-8 flex flex-col md:flex-row gap-6 md:gap-12">
         
         {/* COLUMNA IZQUIERDA */}
         <div className="w-full md:w-[65%]">
@@ -90,7 +92,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             {/* El visor cambia a horizontal (aspect-video) si es la 5ta imagen (índice 4) */}
             <div 
               className={`relative w-full bg-white/5 overflow-hidden cursor-zoom-in transition-all duration-500 ${
-                mobileImageIndex === 4 ? 'aspect-video' : 'aspect-4/5'
+                mobileImageIndex === 4 ? 'aspect-video' : 'aspect-[4/5]'
               }`}
               onClick={() => setLightboxIndex(mobileImageIndex)}
             >
@@ -113,7 +115,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 <button
                   key={index}
                   onClick={() => setMobileImageIndex(index)}
-                  className={`relative shrink-0 w-20 aspect-3/4 overflow-hidden transition-all duration-300 ${
+                  className={`relative shrink-0 w-20 aspect-[3/4] overflow-hidden transition-all duration-300 ${
                     mobileImageIndex === index 
                       ? 'border-b-2 border-white opacity-100' 
                       : 'opacity-40 hover:opacity-100'
@@ -140,7 +142,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   className={`relative overflow-hidden group bg-white/5 cursor-zoom-in ${
                     isFifthItem 
                       ? 'col-span-2 aspect-video' 
-                      : 'col-span-1 aspect-2/3 lg:aspect-9/16' 
+                      : 'col-span-1 aspect-[2/3] lg:aspect-[9/16]' 
                   }`}
                 >
                   <div 
@@ -208,7 +210,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 ))}
               </div>
 
-              {/* Mnsaje de Error si no seleccionan talla */}
+              {/* Mensaje de Error si no seleccionan talla */}
               {errorTalla && (
                 <p className="text-red-500 font-sans font-light text-[10px] tracking-widest uppercase mt-3">
                   * Por favor selecciona una talla antes de continuar.
@@ -254,25 +256,25 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-100 bg-black/95 backdrop-blur-md flex items-center justify-center"
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center"
             onClick={() => setLightboxIndex(null)} 
           >
             <button 
-              className="absolute top-6 right-6 z-110 p-4 text-white hover:text-white/50 transition-colors"
+              className="absolute top-6 right-6 z-[110] p-4 text-white hover:text-white/50 transition-colors"
               onClick={() => setLightboxIndex(null)}
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
             <button 
-              className="absolute left-4 md:left-12 z-110 p-4 text-white hover:text-white/50 transition-colors"
+              className="absolute left-4 md:left-12 z-[110] p-4 text-white hover:text-white/50 transition-colors"
               onClick={prevLightboxImage}
             >
               <svg className="w-10 h-10 md:w-14 md:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M15 19l-7-7 7-7" /></svg>
             </button>
 
             <button 
-              className="absolute right-4 md:right-12 z-110 p-4 text-white hover:text-white/50 transition-colors"
+              className="absolute right-4 md:right-12 z-[110] p-4 text-white hover:text-white/50 transition-colors"
               onClick={nextLightboxImage}
             >
               <svg className="w-10 h-10 md:w-14 md:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5l7 7-7 7" /></svg>

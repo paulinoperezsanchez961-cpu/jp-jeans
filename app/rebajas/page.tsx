@@ -65,7 +65,7 @@ export default function RebajasPage() {
         <p className="text-gray-400 text-[10px] md:text-xs tracking-[0.3em] mt-4 uppercase">Exclusivo JP Jeans</p>
       </div>
 
-      {/* 1. CÍRCULOS DE CATEGORÍAS */}
+      {/* 1. CÍRCULOS DE CATEGORÍAS (Modificados para ser más grandes) */}
       <section className="w-full py-10 flex justify-center items-center gap-6 md:gap-16 px-4 overflow-x-auto no-scrollbar">
         {categorias.map((cat) => (
           <button 
@@ -73,10 +73,11 @@ export default function RebajasPage() {
             onClick={() => setFiltroGenero(filtroGenero === cat.id ? null : cat.id)}
             className="flex flex-col items-center group shrink-0"
           >
-            <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-2 transition-all duration-300 ${filtroGenero === cat.id ? 'border-black scale-110' : 'border-transparent opacity-70 group-hover:opacity-100'}`}>
+            {/* Clases actualizadas: w-24 h-24 para móvil, subiendo hasta w-48 h-48 en pantallas grandes */}
+            <div className={`w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-2 transition-all duration-300 ${filtroGenero === cat.id ? 'border-black scale-110' : 'border-transparent opacity-70 group-hover:opacity-100'}`}>
               <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
             </div>
-            <span className={`mt-3 text-[10px] md:text-xs tracking-widest uppercase font-medium ${filtroGenero === cat.id ? 'text-black' : 'text-gray-400'}`}>
+            <span className={`mt-4 text-[11px] md:text-sm tracking-widest uppercase font-medium ${filtroGenero === cat.id ? 'text-black' : 'text-gray-400'}`}>
               {cat.label}
             </span>
           </button>
@@ -119,7 +120,7 @@ export default function RebajasPage() {
               productosMostrar.map((prod) => (
                 <div key={prod.id} className="group bg-white flex flex-col">
                   {/* IMAGEN */}
-                  <div className="relative w-full aspect-2/3 bg-[#f9f9f9] overflow-hidden">
+                  <div className="relative w-full aspect-[2/3] bg-[#f9f9f9] overflow-hidden">
                     <Link href={`/producto/${prod.id}`} className="absolute inset-0 z-10">
                       <img src={prod.img} alt={prod.nombre} className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0" />
                       <img src={prod.imgHover} alt={prod.nombre} className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
