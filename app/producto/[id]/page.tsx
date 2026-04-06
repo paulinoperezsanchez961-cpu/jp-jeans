@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from '@/context/CartContext'; // <-- Importamos la bolsa
+import { useCart } from '@/context/CartContext';
+import Link from 'next/link';
+
+// Importaciones de Swiper para el carrusel táctil en celular
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+// @ts-ignore
+import 'swiper/css';
+// @ts-ignore
+import 'swiper/css/pagination';
 
 const productoSimulado = {
-  id: "JD-001", // Añadido para que el carrito sepa qué producto es
+  id: "JD-001",
   nombre: "Jeans Dark Premium",
   precioTexto: "$2,499.00 MXN",
-  precioNumerico: 2499.00, // Añadido para que el carrito pueda sumar
+  precioNumerico: 2499.00,
   descripcion: "Denim premium negro absoluto. Corte recto clásico con detalles de desgaste manual. Herrajes oscurecidos y costuras de alta tensión para una durabilidad absoluta. Diseñado en Tlaxcala.",
   imagenes: [
     "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1200", 
@@ -20,18 +29,21 @@ const productoSimulado = {
   tallas: ["28x30", "30x30", "32x32", "34x32", "36x34"]
 };
 
+// Array simulado para la sección "También te puede interesar"
+const productosRelacionados = [
+  { id: 'J-02', nombre: 'Cargo Parachute Black', precio: 2799, img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800' },
+  { id: 'J-03', nombre: 'Slim Fit Essential Ice', precio: 2199, img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800' },
+  { id: 'J-04', nombre: 'Recto Classic Raw', precio: 2299, img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
+  { id: 'J-05', nombre: 'Baggy Washed Grey', precio: 2599, img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' }
+];
+
 export default function ProductPage({ params }: { params: { id: string } }) {
-  // Conexión con el carrito
   const { addToCart } = useCart();
   
   const [tallaSeleccionada, setTallaSeleccionada] = useState<string | null>(null);
-  const [errorTalla, setErrorTalla] = useState(false); // Estado para el error de talla
+  const [errorTalla, setErrorTalla] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Estado para la vista móvil (Visor Principal)
-  const [mobileImageIndex, setMobileImageIndex] = useState(0);
-  
-  // Estado para el Lightbox
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const nextLightboxImage = (e: React.MouseEvent) => {
@@ -59,7 +71,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxIndex]);
 
-  // FUNCIÓN PARA AÑADIR A LA BOLSA (CORREGIDA AL ESPAÑOL)
   const handleAddToCart = () => {
     if (!tallaSeleccionada) {
       setErrorTalla(true);
@@ -67,8 +78,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     }
     setErrorTalla(false);
     
-    // Aquí es donde residía el error de comunicación:
-    // Se han reemplazado 'name', 'price', 'size' e 'image' por sus equivalentes en español
     addToCart({
       id: productoSimulado.id,
       nombre: productoSimulado.nombre,
@@ -80,57 +89,32 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="bg-black min-h-screen w-full text-white pt-24 pb-20">
-      <div className="w-full max-w-[1450px] mx-auto px-4 md:px-8 flex flex-col md:flex-row gap-6 md:gap-12">
+    <main className="bg-black min-h-screen w-full text-white pt-16 md:pt-24 pb-20">
+      <div className="w-full max-w-[1450px] mx-auto px-0 md:px-8 flex flex-col md:flex-row gap-6 md:gap-12">
         
-        {/* COLUMNA IZQUIERDA */}
+        {/* COLUMNA IZQUIERDA: IMÁGENES */}
         <div className="w-full md:w-[65%]">
 
-          {/* VISTA MÓVIL: Visor Dinámico + Miniaturas */}
-          <div className="md:hidden flex flex-col gap-4">
-            
-            {/* El visor cambia a horizontal (aspect-video) si es la 5ta imagen (índice 4) */}
-            <div 
-              className={`relative w-full bg-white/5 overflow-hidden cursor-zoom-in transition-all duration-500 ${
-                mobileImageIndex === 4 ? 'aspect-video' : 'aspect-[4/5]'
-              }`}
-              onClick={() => setLightboxIndex(mobileImageIndex)}
+          {/* VISTA MÓVIL: Swiper (Deslizable y más largo) */}
+          <div className="md:hidden w-full relative">
+            <Swiper
+              pagination={{ clickable: true, dynamicBullets: true }}
+              modules={[Pagination]}
+              className="w-full aspect-[2/3] bg-[#111]" // aspect-[2/3] hace la imagen más alta
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={mobileImageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-cover bg-top"
-                  style={{ backgroundImage: `url(${productoSimulado.imagenes[mobileImageIndex]})` }}
-                />
-              </AnimatePresence>
-            </div>
-
-            {/* Miniaturas Móviles */}
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar w-full pb-2">
               {productoSimulado.imagenes.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setMobileImageIndex(index)}
-                  className={`relative shrink-0 w-20 aspect-[3/4] overflow-hidden transition-all duration-300 ${
-                    mobileImageIndex === index 
-                      ? 'border-b-2 border-white opacity-100' 
-                      : 'opacity-40 hover:opacity-100'
-                  }`}
-                >
-                  <div 
-                    className="absolute inset-0 bg-cover bg-top"
-                    style={{ backgroundImage: `url(${img})` }}
+                <SwiperSlide key={index} onClick={() => setLightboxIndex(index)}>
+                  <img 
+                    src={img} 
+                    alt={`${productoSimulado.nombre} ${index + 1}`} 
+                    className="w-full h-full object-cover object-top cursor-zoom-in"
                   />
-                </button>
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
 
-          {/* VISTA PC: Cuadrícula original */}
+          {/* VISTA PC: Cuadrícula original (imágenes alargadas aspect-[2/3]) */}
           <div className="hidden md:grid md:grid-cols-2 gap-2 md:gap-4">
             {productoSimulado.imagenes.map((img, index) => {
               const isFifthItem = index === 4;
@@ -140,9 +124,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   key={index} 
                   onClick={() => setLightboxIndex(index)}
                   className={`relative overflow-hidden group bg-white/5 cursor-zoom-in ${
-                    isFifthItem 
-                      ? 'col-span-2 aspect-video' 
-                      : 'col-span-1 aspect-[2/3] lg:aspect-[9/16]' 
+                    isFifthItem ? 'col-span-2 aspect-video' : 'col-span-1 aspect-[2/3]' 
                   }`}
                 >
                   <div 
@@ -157,11 +139,11 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* COLUMNA DERECHA: INFORMACIÓN ANCLADA */}
-        <div className="w-full md:w-[35%] relative mt-6 md:mt-0">
+        <div className="w-full md:w-[35%] relative mt-2 md:mt-0 px-4 md:px-0">
           <div className="md:sticky md:top-32 space-y-8">
             
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase opacity-50 mb-4">Nuevas Llegadas / Hombre</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase opacity-50 mb-4 hidden md:block">Nuevas Llegadas / Hombre</p>
               
               <div className="flex justify-between items-start gap-4 mb-4">
                 <h1 className="font-serif text-3xl md:text-5xl uppercase tracking-widest leading-tight">
@@ -197,7 +179,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                     key={talla}
                     onClick={() => {
                       setTallaSeleccionada(talla);
-                      setErrorTalla(false); // Quita el error si seleccionan talla
+                      setErrorTalla(false);
                     }}
                     className={`py-3 font-sans text-xs tracking-widest uppercase transition-all border ${
                       tallaSeleccionada === talla 
@@ -210,7 +192,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 ))}
               </div>
 
-              {/* Mensaje de Error si no seleccionan talla */}
               {errorTalla && (
                 <p className="text-red-500 font-sans font-light text-[10px] tracking-widest uppercase mt-3">
                   * Por favor selecciona una talla antes de continuar.
@@ -218,7 +199,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
               )}
             </div>
 
-            {/* BOTÓN CONECTADO AL CARRITO */}
             <button 
               onClick={handleAddToCart}
               className="w-full py-5 bg-white text-black font-sans text-xs font-bold tracking-[0.2em] uppercase hover:bg-white/80 transition-colors"
@@ -248,7 +228,44 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* GALERÍA EXPANDIDA A PANTALLA COMPLETA (LIGHTBOX) - TOTALMENTE INTACTA */}
+      {/* NUEVA SECCIÓN: COMPLETAR EL LOOK (PRODUCTOS RELACIONADOS) */}
+      <section className="w-full max-w-[1450px] mx-auto px-4 md:px-8 mt-24 pt-16 border-t border-white/10">
+        <h3 className="font-serif text-2xl md:text-3xl tracking-[0.2em] uppercase mb-10 text-center md:text-left">
+          También te puede interesar
+        </h3>
+        
+        {/* Cuadrícula de productos relacionados con el mismo estilo que el catálogo */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/20 p-px">
+          {productosRelacionados.map((prod) => (
+            <div key={prod.id} className="group bg-black flex flex-col relative">
+              <div className="relative w-full aspect-[2/3] bg-[#111] overflow-hidden">
+                <Link href={`/producto/${prod.id}`} className="absolute inset-0 z-10">
+                  <img 
+                    src={prod.img} 
+                    alt={prod.nombre}
+                    className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  />
+                </Link>
+                <button className="absolute top-3 right-3 z-20 text-white hover:text-gray-400 transition bg-black/30 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              </div>
+              <Link href={`/producto/${prod.id}`} className="w-full text-left px-3 py-4 flex flex-col">
+                <p className="text-white/60 text-[10px] tracking-widest mb-1">
+                  ${prod.precio.toLocaleString('es-MX')} MXN
+                </p>
+                <h3 className="text-white font-medium text-[11px] md:text-xs tracking-wide uppercase">
+                  {prod.nombre}
+                </h3>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* GALERÍA EXPANDIDA A PANTALLA COMPLETA (LIGHTBOX) */}
       <AnimatePresence>
         {lightboxIndex !== null && (
           <motion.div 

@@ -12,7 +12,7 @@ const cortes = [
   { id: 'recto', label: 'Recto', img: 'https://images.pexels.com/photos/3775249/pexels-photo-3775249.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' }
 ];
 
-// 2. PRODUCTOS (Ahora con números reales para el precio, tallas y colores)
+// 2. PRODUCTOS
 const productosDb = [
   { id: 'J-01', nombre: 'Jeans Baggy 90s Vintage', precio: 2499, corte: 'baggy', color: 'Azul', tallas: ['28', '30', '32'],
     img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800', 
@@ -49,16 +49,12 @@ const productosDb = [
 ];
 
 export default function JeansHombrePage() {
-  // ESTADOS DE FILTROS
-  const [filtroActivo, setFiltroActivo] = useState<string | null>(null); // Banners (Corte)
+  const [filtroActivo, setFiltroActivo] = useState<string | null>(null);
   const [filtroTalla, setFiltroTalla] = useState<string | null>(null);
   const [filtroColor, setFiltroColor] = useState<string | null>(null);
-  const [orden, setOrden] = useState<string | null>(null); // 'asc', 'desc'
-  
-  // ESTADO PARA LOS MENÚS DESPLEGABLES DE LA BARRA
+  const [orden, setOrden] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState<'talla' | 'color' | 'orden' | null>(null);
 
-  // LÓGICA DE FILTRADO Y ORDENAMIENTO MÚLTIPLE
   let productosMostrar = [...productosDb];
 
   if (filtroActivo) productosMostrar = productosMostrar.filter(p => p.corte === filtroActivo);
@@ -68,7 +64,6 @@ export default function JeansHombrePage() {
   if (orden === 'asc') productosMostrar.sort((a, b) => a.precio - b.precio);
   if (orden === 'desc') productosMostrar.sort((a, b) => b.precio - a.precio);
 
-  // FUNCIÓN PARA LIMPIAR TODOS LOS FILTROS
   const limpiarFiltros = () => {
     setFiltroActivo(null);
     setFiltroTalla(null);
@@ -80,20 +75,20 @@ export default function JeansHombrePage() {
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans">
       
-      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR */}
-      <div className="w-full h-16 md:h-20 bg-black shrink-0" />
-      <div className="w-full h-0.5 bg-white shrink-0" />
+      {/* 1. ESPACIO DEL ENCABEZADO */}
+      <div className="w-full h-16 md:h-20 bg-white shrink-0" />
 
-      {/* 2. LOS 4 BANNERS (Filtran por corte) */}
-      <section className="w-full grid grid-cols-4 h-[50vh] md:h-[75vh] bg-white gap-1 px-1">
+      {/* 2. LOS 4 BANNERS (MODIFICADOS AL ESTILO CALVIN KLEIN) */}
+      {/* Se eliminó el "gap-1 px-1" para que las imágenes estén pegadas */}
+      <section className="w-full grid grid-cols-4 h-[40vh] md:h-[65vh] bg-white">
         {cortes.map((corte) => (
           <div 
             key={corte.id} 
             onClick={() => {
               setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
-              setMenuAbierto(null); // Cierra cualquier menú abierto al tocar un banner
+              setMenuAbierto(null);
             }}
-            className="group relative w-full h-full overflow-hidden cursor-pointer bg-gray-100"
+            className="group relative w-full h-full overflow-hidden cursor-pointer bg-[#f2f2f2]"
           >
             <img 
               src={corte.img} 
@@ -102,12 +97,15 @@ export default function JeansHombrePage() {
                 filtroActivo === corte.id ? 'scale-105' : 'group-hover:scale-105'
               }`}
             />
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/90 via-black/40 to-transparent z-10" />
-            <div className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ${
-              filtroActivo && filtroActivo !== corte.id ? 'opacity-70' : 'opacity-0 group-hover:opacity-20'
+            
+            {/* Overlay sutil blanco cuando otro banner está seleccionado (sin degradados oscuros) */}
+            <div className={`absolute inset-0 bg-white/60 transition-opacity duration-500 ${
+              filtroActivo && filtroActivo !== corte.id ? 'opacity-100' : 'opacity-0'
             }`} />
-            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-30">
-              <h3 className="text-white text-xs md:text-base tracking-widest md:tracking-[0.2em] uppercase font-bold drop-shadow-md">
+            
+            {/* Texto en negro puro, alineado abajo a la izquierda, sin upperCase forzado */}
+            <div className="absolute bottom-2 left-2 md:bottom-6 md:left-6 z-30">
+              <h3 className="text-black text-[11px] md:text-base font-semibold tracking-wide drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]">
                 {corte.label}
               </h3>
             </div>
@@ -115,67 +113,58 @@ export default function JeansHombrePage() {
         ))}
       </section>
 
-      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL */}
-      <div className="w-full z-90 sticky top-16 md:top-20 shadow-lg">
-        <div className="w-full bg-black text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
+      {/* 3. BARRA DE HERRAMIENTAS (Filtros en color claro para combinar) */}
+      <div className="w-full z-[90] sticky top-16 md:top-20 shadow-sm border-y border-gray-200">
+        <div className="w-full bg-white text-black px-4 md:px-8 py-4 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
-          {/* Lado Izquierdo: Contador y Limpiar Filtros */}
           <div className="flex items-center space-x-6">
-            <span>{productosMostrar.length} ARTÍCULOS</span>
+            <span className="font-medium text-gray-500">{productosMostrar.length} ARTÍCULOS</span>
             {(filtroActivo || filtroTalla || filtroColor || orden) && (
               <button 
                 onClick={limpiarFiltros}
-                className="text-gray-400 hover:text-white transition-colors border-b border-transparent hover:border-white"
+                className="text-black hover:text-gray-500 transition-colors border-b border-transparent hover:border-black"
               >
                 LIMPIAR TODO
               </button>
             )}
           </div>
 
-          {/* Lado Derecho: Botones Desplegables */}
           <div className="flex items-center space-x-6">
-            
-            {/* Botón TALLA */}
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'talla' ? null : 'talla')}
-                className={`transition-opacity ${filtroTalla ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroTalla ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
               >
-                {filtroTalla ? `TALLA: ${filtroTalla}` : 'TALLA'}
+                {filtroTalla ? `TALLA: ${filtroTalla}` : 'TALLAR'}
               </button>
             </div>
 
-            {/* Botón COLOR */}
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'color' ? null : 'color')}
-                className={`transition-opacity ${filtroColor ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroColor ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
               >
                 {filtroColor ? `COLOR: ${filtroColor}` : 'COLOR'}
               </button>
             </div>
 
-            {/* Botón ORDENAR */}
             <div className="relative">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'orden' ? null : 'orden')}
                 className="flex items-center space-x-2 hover:opacity-70 transition-opacity"
               >
-                <span className="hidden md:inline">{orden ? 'ORDENADO' : 'ORDENAR'}</span>
+                <span className="hidden md:inline">{orden ? 'ORDENADO' : 'FILTRAR'}</span>
                 <span className="md:hidden">FILTRAR</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
               </button>
             </div>
-
           </div>
         </div>
 
-        {/* PANELES DESPLEGABLES (Flotan debajo de la barra negra) */}
         {menuAbierto && (
-          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-xl z-10 px-8 py-6 text-xs tracking-widest uppercase">
-            
+          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-gray-200 shadow-md z-10 px-8 py-6 text-xs tracking-widest uppercase">
             {menuAbierto === 'talla' && (
               <div className="flex space-x-8">
                 {['28', '30', '32', '34'].map(t => (
@@ -189,7 +178,6 @@ export default function JeansHombrePage() {
                 ))}
               </div>
             )}
-
             {menuAbierto === 'color' && (
               <div className="flex space-x-8">
                 {['Azul', 'Azul Oscuro', 'Negro', 'Gris', 'Arena'].map(c => (
@@ -203,7 +191,6 @@ export default function JeansHombrePage() {
                 ))}
               </div>
             )}
-
             {menuAbierto === 'orden' && (
               <div className="flex flex-col space-y-4 items-start">
                 <button 
@@ -220,22 +207,18 @@ export default function JeansHombrePage() {
                 </button>
               </div>
             )}
-            
           </div>
         )}
       </div>
 
-      {/* 4. CATÁLOGO DE PRODUCTOS (GRID PRO ESTILO LUJO) */}
-      <section className="w-full grow bg-white">
-        <div className="w-full bg-black p-px">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
-            
+      {/* 4. CATÁLOGO DE PRODUCTOS */}
+      <section className="w-full grow bg-white pb-12">
+        <div className="w-full bg-white p-px">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-200">
             {productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
-                <div key={prod.id} className="group bg-white flex flex-col">
-
-                  {/* IMAGEN */}
-                  <div className="relative w-full aspect-2/3 bg-[#f6f6f6] overflow-hidden">
+                <div key={prod.id} className="group bg-white flex flex-col relative">
+                  <div className="relative w-full aspect-[3/4] md:aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
                     <Link href={`/producto/${prod.id}`} className="absolute inset-0 z-10">
                       <img 
                         src={prod.img} 
@@ -248,30 +231,23 @@ export default function JeansHombrePage() {
                         className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                       />
                     </Link>
-
-                    {/* FAVORITO */}
-                    <button className="absolute top-4 right-4 z-20 text-black hover:text-gray-400 transition">
+                    <button className="absolute top-4 right-4 z-20 text-black hover:text-gray-400 transition bg-white/50 p-2 rounded-full backdrop-blur-sm">
                       <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </button>
                   </div>
-
-                  {/* INFO */}
-                  <Link href={`/producto/${prod.id}`} className="w-full text-center px-4 py-5 flex flex-col items-center">
-                    <h3 className="text-black font-medium text-[10px] md:text-xs tracking-[0.15em] uppercase mb-2">
-                      {prod.nombre}
-                    </h3>
-                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest">
-                      {/* Aquí formateamos el número real a moneda */}
+                  <Link href={`/producto/${prod.id}`} className="w-full text-left px-4 py-5 flex flex-col">
+                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest mb-1">
                       ${prod.precio.toLocaleString('es-MX')} MXN
                     </p>
+                    <h3 className="text-black font-medium text-[11px] md:text-sm tracking-wide capitalize">
+                      {prod.nombre.toLowerCase()}
+                    </h3>
                   </Link>
-
                 </div>
               ))
             ) : (
-              // Mensaje por si aplican filtros que no tienen resultados
               <div className="col-span-2 md:col-span-4 bg-white py-20 text-center flex flex-col items-center">
                 <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
                 <button onClick={limpiarFiltros} className="border-b border-black text-black text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
@@ -279,7 +255,6 @@ export default function JeansHombrePage() {
                 </button>
               </div>
             )}
-
           </div>
         </div>
       </section>
