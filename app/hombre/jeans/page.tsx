@@ -12,7 +12,7 @@ import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BANNERS DE CORTES (Estilo CK)
+// 1. BANNERS DE CORTES (Estilo CK, ahora taller aspect-[2/3])
 const cortes = [
   { id: 'straight', label: 'Straight', img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
   { id: 'loose', label: 'Loose', img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800' },
@@ -20,7 +20,7 @@ const cortes = [
   { id: 'slim', label: 'Slim', img: 'https://images.unsplash.com/photo-1511130558090-00af810c2111?q=80&w=800' }
 ];
 
-// 2. PRODUCTOS
+// 2. PRODUCTOS (Actualizados con arreglo de "imagenes" para el Swiper)
 const productosDb = [
   { id: 'J-01', nombre: 'Jeans Baggy 90s Vintage', precio: 2499, corte: 'baggy', color: 'Azul', tallas: ['28', '30', '32'],
     imagenes: [
@@ -107,11 +107,12 @@ export default function JeansHombrePage() {
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans text-black">
       
-      {/* 1. ESPACIO DEL ENCABEZADO */}
-      <div className="w-full h-16 md:h-20 bg-white shrink-0" />
+      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR (Restaurado a Negro) */}
+      <div className="w-full h-16 md:h-20 bg-black shrink-0" />
+      <div className="w-full h-0.5 bg-white shrink-0" />
 
-      {/* 2. LOS 4 BANNERS PEQUEÑOS (Estilo CK: Proporción 4/5, sin espacios, texto negro abajo) */}
-      <section className="w-full grid grid-cols-4 bg-[#f2f2f2]">
+      {/* 2. LOS 4 BANNERS (Estilo CK, Taller aspect-[2/3], sin separaciones) */}
+      <section className="w-full grid grid-cols-4 bg-white">
         {cortes.map((corte) => (
           <div 
             key={corte.id} 
@@ -119,7 +120,8 @@ export default function JeansHombrePage() {
               setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
               setMenuAbierto(null);
             }}
-            className="group relative w-full aspect-[4/5] overflow-hidden cursor-pointer"
+            // aspect-[2/3] los hace más largos verticalmente
+            className="group relative w-full aspect-[2/3] overflow-hidden cursor-pointer"
           >
             <img 
               src={corte.img} 
@@ -129,12 +131,14 @@ export default function JeansHombrePage() {
               }`}
             />
             
+            {/* Overlay sutil blanco para destacar la selección */}
             <div className={`absolute inset-0 bg-white/50 transition-opacity duration-500 ${
               filtroActivo && filtroActivo !== corte.id ? 'opacity-100' : 'opacity-0'
             }`} />
             
+            {/* Texto en negro, estilo Calvin Klein */}
             <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-30">
-              <h3 className="text-black text-[10px] md:text-sm font-medium tracking-wide">
+              <h3 className="text-black text-[10px] md:text-sm font-medium tracking-wide drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                 {corte.label}
               </h3>
             </div>
@@ -142,16 +146,16 @@ export default function JeansHombrePage() {
         ))}
       </section>
 
-      {/* 3. BARRA DE FILTROS BLANCA */}
-      <div className="w-full z-[90] sticky top-16 md:top-20 bg-white border-y border-black">
-        <div className="w-full text-black px-4 md:px-8 py-4 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
+      {/* 3. BARRA DE FILTROS (Restaurada a Negro Original) */}
+      <div className="w-full z-[90] sticky top-16 md:top-20 bg-black border-y border-white/20 text-white">
+        <div className="w-full px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
           <div className="flex items-center space-x-6">
-            <span className="text-gray-500">{productosMostrar.length} ARTÍCULOS</span>
+            <span className="text-gray-400">{productosMostrar.length} ARTÍCULOS</span>
             {(filtroActivo || filtroTalla || filtroColor || orden) && (
               <button 
                 onClick={limpiarFiltros}
-                className="text-black hover:text-gray-500 transition-colors border-b border-transparent hover:border-black"
+                className="text-white hover:text-gray-300 transition-colors border-b border-transparent hover:border-white"
               >
                 LIMPIAR TODO
               </button>
@@ -162,7 +166,7 @@ export default function JeansHombrePage() {
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'talla' ? null : 'talla')}
-                className={`transition-opacity ${filtroTalla ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroTalla ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
               >
                 {filtroTalla ? `TALLA: ${filtroTalla}` : 'TALLA'}
               </button>
@@ -171,7 +175,7 @@ export default function JeansHombrePage() {
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'color' ? null : 'color')}
-                className={`transition-opacity ${filtroColor ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroColor ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
               >
                 {filtroColor ? `COLOR: ${filtroColor}` : 'COLOR'}
               </button>
@@ -193,7 +197,8 @@ export default function JeansHombrePage() {
         </div>
 
         {menuAbierto && (
-          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-sm z-10 px-8 py-6 text-xs tracking-widest uppercase">
+          // El panel desplegable permanece blanco para máxima legibilidad
+          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-gray-200 shadow-sm z-10 px-8 py-6 text-xs tracking-widest uppercase">
             {menuAbierto === 'talla' && (
               <div className="flex space-x-8">
                 {['28', '30', '32', '34'].map(t => (
@@ -242,8 +247,8 @@ export default function JeansHombrePage() {
 
       {/* 4. CATÁLOGO DE PRODUCTOS (Fondo blanco con CUADRÍCULA NEGRA) */}
       <section className="w-full grow bg-white pb-12">
-        {/* Aquí se define la cuadrícula negra que actúa como separador */}
-        <div className="w-full bg-black border-y border-black">
+        <div className="w-full bg-black border-b border-black">
+          {/* gap-px genera la cuadrícula negra de 1px */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             {productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
@@ -252,17 +257,18 @@ export default function JeansHombrePage() {
                   {/* CONTENEDOR DE IMAGEN */}
                   <div className="relative w-full aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
                     
-                    {/* VISTA MÓVIL: Swiper táctil con bolitas NEGRAS */}
+                    {/* VISTA MÓVIL: Swiper táctil con bolitas NEGRAS Y SUTILES */}
                     <div className="md:hidden w-full h-full">
                       <Swiper
                         pagination={{ dynamicBullets: true }}
                         modules={[Pagination]}
                         className="w-full h-full"
+                        // Inyección de estilos para bolitas negras
                         style={{
-                          "--swiper-pagination-color": "#000",
-                          "--swiper-pagination-bullet-inactive-color": "#000",
-                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
-                          "--swiper-pagination-bullet-size": "5px"
+                          "--swiper-pagination-color": "#000", // Activa (Negra)
+                          "--swiper-pagination-bullet-inactive-color": "#000", // Inactiva (Negra)
+                          "--swiper-pagination-bullet-inactive-opacity": "0.2", // Sutil
+                          "--swiper-pagination-bullet-size": "5px" // Pequeña
                         } as React.CSSProperties}
                       >
                         {prod.imagenes.map((img, index) => (
