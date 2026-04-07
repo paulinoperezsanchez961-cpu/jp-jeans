@@ -12,15 +12,15 @@ import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BANNERS DE CORTES
+// 1. BANNERS DE CORTES (Estilo CK)
 const cortes = [
-  { id: 'baggy', label: 'Baggy', img: 'https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
-  { id: 'cargo', label: 'Cargo', img: 'https://images.pexels.com/photos/2881023/pexels-photo-2881023.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
-  { id: 'slim', label: 'Slim', img: 'https://images.pexels.com/photos/1040893/pexels-photo-1040893.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
-  { id: 'recto', label: 'Recto', img: 'https://images.pexels.com/photos/3775249/pexels-photo-3775249.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' }
+  { id: 'straight', label: 'Straight', img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
+  { id: 'loose', label: 'Loose', img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800' },
+  { id: 'skinny', label: 'Skinny', img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800' },
+  { id: 'slim', label: 'Slim', img: 'https://images.unsplash.com/photo-1511130558090-00af810c2111?q=80&w=800' }
 ];
 
-// 2. PRODUCTOS (Actualizados con arreglo de "imagenes" para el Swiper)
+// 2. PRODUCTOS
 const productosDb = [
   { id: 'J-01', nombre: 'Jeans Baggy 90s Vintage', precio: 2499, corte: 'baggy', color: 'Azul', tallas: ['28', '30', '32'],
     imagenes: [
@@ -105,14 +105,13 @@ export default function JeansHombrePage() {
   };
 
   return (
-    <div className="bg-black min-h-screen w-full flex flex-col font-sans text-white">
+    <div className="bg-white min-h-screen w-full flex flex-col font-sans text-black">
       
-      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR */}
-      <div className="w-full h-16 md:h-20 bg-black shrink-0" />
-      <div className="w-full h-0.5 bg-white/20 shrink-0" />
+      {/* 1. ESPACIO DEL ENCABEZADO */}
+      <div className="w-full h-16 md:h-20 bg-white shrink-0" />
 
-      {/* 2. LOS 4 BANNERS (Estilo Simétrico sin separaciones) */}
-      <section className="w-full grid grid-cols-2 md:grid-cols-4 h-[50vh] md:h-[65vh] bg-black">
+      {/* 2. LOS 4 BANNERS PEQUEÑOS (Estilo CK: Proporción 4/5, sin espacios, texto negro abajo) */}
+      <section className="w-full grid grid-cols-4 bg-[#f2f2f2]">
         {cortes.map((corte) => (
           <div 
             key={corte.id} 
@@ -120,21 +119,22 @@ export default function JeansHombrePage() {
               setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
               setMenuAbierto(null);
             }}
-            className="group relative w-full h-full overflow-hidden cursor-pointer"
+            className="group relative w-full aspect-[4/5] overflow-hidden cursor-pointer"
           >
             <img 
               src={corte.img} 
               alt={`Corte ${corte.label}`}
-              className={`w-full h-full object-cover transition-transform duration-700 ${
+              className={`w-full h-full object-cover object-center transition-transform duration-700 ${
                 filtroActivo === corte.id ? 'scale-105' : 'group-hover:scale-105'
               }`}
             />
-            <div className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ${
-              filtroActivo === corte.id ? 'opacity-0' : 'group-hover:opacity-0'
+            
+            <div className={`absolute inset-0 bg-white/50 transition-opacity duration-500 ${
+              filtroActivo && filtroActivo !== corte.id ? 'opacity-100' : 'opacity-0'
             }`} />
             
-            <div className="absolute bottom-3 left-3 md:bottom-6 md:left-6 z-30">
-              <h3 className="text-white text-[11px] md:text-base font-bold tracking-widest md:tracking-[0.2em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-30">
+              <h3 className="text-black text-[10px] md:text-sm font-medium tracking-wide">
                 {corte.label}
               </h3>
             </div>
@@ -142,16 +142,16 @@ export default function JeansHombrePage() {
         ))}
       </section>
 
-      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL */}
-      <div className="w-full z-[90] sticky top-16 md:top-20 shadow-lg border-y border-white/20">
-        <div className="w-full bg-black text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
+      {/* 3. BARRA DE FILTROS BLANCA */}
+      <div className="w-full z-[90] sticky top-16 md:top-20 bg-white border-y border-black">
+        <div className="w-full text-black px-4 md:px-8 py-4 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
           <div className="flex items-center space-x-6">
-            <span>{productosMostrar.length} ARTÍCULOS</span>
+            <span className="text-gray-500">{productosMostrar.length} ARTÍCULOS</span>
             {(filtroActivo || filtroTalla || filtroColor || orden) && (
               <button 
                 onClick={limpiarFiltros}
-                className="text-gray-400 hover:text-white transition-colors border-b border-transparent hover:border-white"
+                className="text-black hover:text-gray-500 transition-colors border-b border-transparent hover:border-black"
               >
                 LIMPIAR TODO
               </button>
@@ -162,7 +162,7 @@ export default function JeansHombrePage() {
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'talla' ? null : 'talla')}
-                className={`transition-opacity ${filtroTalla ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroTalla ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
               >
                 {filtroTalla ? `TALLA: ${filtroTalla}` : 'TALLA'}
               </button>
@@ -171,7 +171,7 @@ export default function JeansHombrePage() {
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'color' ? null : 'color')}
-                className={`transition-opacity ${filtroColor ? 'text-white font-bold border-b border-white' : 'hover:opacity-70'}`}
+                className={`transition-opacity ${filtroColor ? 'text-black font-bold border-b border-black' : 'hover:opacity-70'}`}
               >
                 {filtroColor ? `COLOR: ${filtroColor}` : 'COLOR'}
               </button>
@@ -182,7 +182,7 @@ export default function JeansHombrePage() {
                 onClick={() => setMenuAbierto(menuAbierto === 'orden' ? null : 'orden')}
                 className="flex items-center space-x-2 hover:opacity-70 transition-opacity"
               >
-                <span className="hidden md:inline">{orden ? 'ORDENADO' : 'ORDENAR'}</span>
+                <span className="hidden md:inline">{orden ? 'ORDENADO' : 'FILTRAR'}</span>
                 <span className="md:hidden">FILTRAR</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -193,14 +193,14 @@ export default function JeansHombrePage() {
         </div>
 
         {menuAbierto && (
-          <div className="absolute top-full left-0 w-full bg-black text-white border-b border-white/20 shadow-xl z-10 px-8 py-6 text-xs tracking-widest uppercase">
+          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-sm z-10 px-8 py-6 text-xs tracking-widest uppercase">
             {menuAbierto === 'talla' && (
               <div className="flex space-x-8">
                 {['28', '30', '32', '34'].map(t => (
                   <button 
                     key={t} 
                     onClick={() => { setFiltroTalla(filtroTalla === t ? null : t); setMenuAbierto(null); }}
-                    className={`${filtroTalla === t ? 'font-bold border-b border-white' : 'text-gray-400 hover:text-white transition-colors'}`}
+                    className={`${filtroTalla === t ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
                   >
                     Talla {t}
                   </button>
@@ -213,7 +213,7 @@ export default function JeansHombrePage() {
                   <button 
                     key={c} 
                     onClick={() => { setFiltroColor(filtroColor === c ? null : c); setMenuAbierto(null); }}
-                    className={`${filtroColor === c ? 'font-bold border-b border-white' : 'text-gray-400 hover:text-white transition-colors'}`}
+                    className={`${filtroColor === c ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
                   >
                     {c}
                   </button>
@@ -224,13 +224,13 @@ export default function JeansHombrePage() {
               <div className="flex flex-col space-y-4 items-start">
                 <button 
                   onClick={() => { setOrden(orden === 'asc' ? null : 'asc'); setMenuAbierto(null); }}
-                  className={`${orden === 'asc' ? 'font-bold border-b border-white' : 'text-gray-400 hover:text-white transition-colors'}`}
+                  className={`${orden === 'asc' ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
                 >
                   PRECIO: MENOR A MAYOR
                 </button>
                 <button 
                   onClick={() => { setOrden(orden === 'desc' ? null : 'desc'); setMenuAbierto(null); }}
-                  className={`${orden === 'desc' ? 'font-bold border-b border-white' : 'text-gray-400 hover:text-white transition-colors'}`}
+                  className={`${orden === 'desc' ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
                 >
                   PRECIO: MAYOR A MENOR
                 </button>
@@ -240,23 +240,30 @@ export default function JeansHombrePage() {
         )}
       </div>
 
-      {/* 4. CATÁLOGO DE PRODUCTOS CON SWIPER EN MÓVIL */}
-      <section className="w-full grow bg-black pb-12">
-        <div className="w-full bg-white/10 p-px">
+      {/* 4. CATÁLOGO DE PRODUCTOS (Fondo blanco con CUADRÍCULA NEGRA) */}
+      <section className="w-full grow bg-white pb-12">
+        {/* Aquí se define la cuadrícula negra que actúa como separador */}
+        <div className="w-full bg-black border-y border-black">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             {productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
-                <div key={prod.id} className="group bg-black flex flex-col relative">
+                <div key={prod.id} className="group bg-white flex flex-col relative">
                   
-                  {/* CONTENEDOR DE IMAGEN (Aspecto 2/3 para que sean más largas) */}
-                  <div className="relative w-full aspect-[2/3] bg-[#111] overflow-hidden">
+                  {/* CONTENEDOR DE IMAGEN */}
+                  <div className="relative w-full aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
                     
-                    {/* VISTA MÓVIL: Swiper táctil */}
+                    {/* VISTA MÓVIL: Swiper táctil con bolitas NEGRAS */}
                     <div className="md:hidden w-full h-full">
                       <Swiper
                         pagination={{ dynamicBullets: true }}
                         modules={[Pagination]}
                         className="w-full h-full"
+                        style={{
+                          "--swiper-pagination-color": "#000",
+                          "--swiper-pagination-bullet-inactive-color": "#000",
+                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
+                          "--swiper-pagination-bullet-size": "5px"
+                        } as React.CSSProperties}
                       >
                         {prod.imagenes.map((img, index) => (
                           <SwiperSlide key={index}>
@@ -268,7 +275,7 @@ export default function JeansHombrePage() {
                       </Swiper>
                     </div>
 
-                    {/* VISTA PC: Animación Hover Clásica */}
+                    {/* VISTA PC: Animación Hover */}
                     <Link href={`/producto/${prod.id}`} className="hidden md:block absolute inset-0 z-10">
                       <img 
                         src={prod.imagenes[0]} 
@@ -282,27 +289,27 @@ export default function JeansHombrePage() {
                       />
                     </Link>
 
-                    <button className="absolute top-4 right-4 z-20 text-white hover:text-gray-400 transition bg-black/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
+                    <button className="absolute top-3 right-3 z-20 text-black hover:text-gray-400 transition bg-white/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
                       <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </button>
                   </div>
 
-                  <Link href={`/producto/${prod.id}`} className="w-full text-center px-4 py-5 flex flex-col items-center">
-                    <h3 className="text-white font-medium text-[10px] md:text-xs tracking-[0.15em] uppercase mb-2">
-                      {prod.nombre}
-                    </h3>
-                    <p className="text-white/60 text-[10px] md:text-xs tracking-widest">
+                  <Link href={`/producto/${prod.id}`} className="w-full text-left px-3 py-4 flex flex-col">
+                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest mb-1">
                       ${prod.precio.toLocaleString('es-MX')} MXN
                     </p>
+                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase">
+                      {prod.nombre}
+                    </h3>
                   </Link>
                 </div>
               ))
             ) : (
-              <div className="col-span-2 md:col-span-4 bg-black py-20 text-center flex flex-col items-center">
-                <p className="text-white text-xs md:text-sm tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
-                <button onClick={limpiarFiltros} className="border-b border-white/50 text-white text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-400 hover:border-gray-400 transition-colors">
+              <div className="col-span-2 md:col-span-4 bg-white py-20 text-center flex flex-col items-center">
+                <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
+                <button onClick={limpiarFiltros} className="border-b border-black text-black text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
                   Ver todos los productos
                 </button>
               </div>
