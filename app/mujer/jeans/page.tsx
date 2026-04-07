@@ -4,61 +4,95 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
-// 1. BANNERS DE CORTES MUJER (Nuevas categorías)
+// Importaciones de Swiper para el catálogo móvil y ahora para Banners
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, FreeMode } from 'swiper/modules'; // FreeMode permite deslizamiento libre fluido
+// @ts-ignore
+import 'swiper/css';
+// @ts-ignore
+import 'swiper/css/pagination';
+// @ts-ignore
+import 'swiper/css/free-mode';
+
+// 1. BANNERS DE CORTES MUJER (8 Categorías para el Carrusel)
 const cortes = [
   { id: 'holgado', label: 'Holgado', img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800' },
-  { id: 'cargo', label: 'Cargo', img: 'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800' },
   { id: 'wide-leg', label: 'Wide Leg', img: 'https://images.unsplash.com/photo-1604135307399-86c6ce0aba8e?q=80&w=800' },
-  { id: 'skinny', label: 'Skinny', img: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800' }
+  { id: 'recto', label: 'Recto', img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
+  { id: 'acampanado', label: 'Acampanado', img: 'https://images.pexels.com/photos/1040893/pexels-photo-1040893.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
+  { id: 'cargo', label: 'Cargo', img: 'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800' },
+  { id: 'skinny', label: 'Skinny', img: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800' },
+  { id: 'colombiano', label: 'Colombiano', img: 'https://images.pexels.com/photos/1336873/pexels-photo-1336873.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
+  { id: 'barrel', label: 'Barrel', img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' } // Nuevo corte añadido
 ];
 
 // 2. PRODUCTOS SIMULADOS MUJER
 const productosDb = [
   { id: 'JM-01', nombre: 'Holgado 90s Vintage', precio: 2499, corte: 'holgado', color: 'Azul', tallas: ['24', '26', '28'],
-    img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800' 
+    imagenes: [
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800', 
+      'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800',
+      'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800'
+    ] 
   },
   { id: 'JM-02', nombre: 'Cargo Parachute Olive', precio: 2799, corte: 'cargo', color: 'Verde', tallas: ['26', '28', '30'],
-    img: 'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=800'
+    imagenes: [
+      'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800', 
+      'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=800',
+      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800'
+    ]
   },
-  { id: 'JM-03', null: 'Wide Leg Essential', nombre: 'Wide Leg Essential', precio: 2199, corte: 'wide-leg', color: 'Azul', tallas: ['24', '26'],
-    img: 'https://images.unsplash.com/photo-1604135307399-86c6ce0aba8e?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800'
+  { id: 'JM-03', nombre: 'Wide Leg Essential', precio: 2199, corte: 'wide-leg', color: 'Azul', tallas: ['24', '26'],
+    imagenes: [
+      'https://images.unsplash.com/photo-1604135307399-86c6ce0aba8e?q=80&w=800', 
+      'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800',
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800'
+    ]
   },
   { id: 'JM-04', nombre: 'Skinny Classic Black', precio: 2299, corte: 'skinny', color: 'Negro', tallas: ['26', '28', '30'],
-    img: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800'
+    imagenes: [
+      'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800', 
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800',
+      'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=800'
+    ]
   },
   { id: 'JM-05', nombre: 'Holgado Washed Grey', precio: 2599, corte: 'holgado', color: 'Gris', tallas: ['28', '30'],
-    img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800' 
+    imagenes: [
+      'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800', 
+      'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800',
+      'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800'
+    ] 
   },
   { id: 'JM-06', nombre: 'Cargo Utility Sand', precio: 2899, corte: 'cargo', color: 'Arena', tallas: ['24', '26', '28'],
-    img: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800'
+    imagenes: [
+      'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=800', 
+      'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800',
+      'https://images.pexels.com/photos/1336873/pexels-photo-1336873.jpeg?auto=compress&cs=tinysrgb&w=800&q=80'
+    ]
   },
   { id: 'JM-07', nombre: 'Wide Leg Dark Night', precio: 2199, corte: 'wide-leg', color: 'Azul Oscuro', tallas: ['24', '26', '28', '30'],
-    img: 'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1604135307399-86c6ce0aba8e?q=80&w=800'
+    imagenes: [
+      'https://images.unsplash.com/photo-1528650774618-80f4f910609f?q=80&w=800', 
+      'https://images.unsplash.com/photo-1604135307399-86c6ce0aba8e?q=80&w=800',
+      'https://images.unsplash.com/photo-1511130558090-00af810c2111?q=80&w=800'
+    ]
   },
   { id: 'JM-08', nombre: 'Skinny Selvedge', precio: 3199, corte: 'skinny', color: 'Azul Oscuro', tallas: ['26', '28'],
-    img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800', 
-    imgHover: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800'
+    imagenes: [
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800', 
+      'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800',
+      'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800'
+    ]
   }
 ];
 
 export default function JeansMujerPage() {
-  // ESTADOS DE FILTROS
-  const [filtroActivo, setFiltroActivo] = useState<string | null>(null); // Banners (Corte)
+  const [filtroActivo, setFiltroActivo] = useState<string | null>(null);
   const [filtroTalla, setFiltroTalla] = useState<string | null>(null);
   const [filtroColor, setFiltroColor] = useState<string | null>(null);
-  const [orden, setOrden] = useState<string | null>(null); // 'asc', 'desc'
-  
-  // ESTADO PARA LOS MENÚS DESPLEGABLES DE LA BARRA
+  const [orden, setOrden] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState<'talla' | 'color' | 'orden' | null>(null);
 
-  // LÓGICA DE FILTRADO Y ORDENAMIENTO MÚLTIPLE
   let productosMostrar = [...productosDb];
 
   if (filtroActivo) productosMostrar = productosMostrar.filter(p => p.corte === filtroActivo);
@@ -68,7 +102,6 @@ export default function JeansMujerPage() {
   if (orden === 'asc') productosMostrar.sort((a, b) => a.precio - b.precio);
   if (orden === 'desc') productosMostrar.sort((a, b) => b.precio - a.precio);
 
-  // FUNCIÓN PARA LIMPIAR TODOS LOS FILTROS
   const limpiarFiltros = () => {
     setFiltroActivo(null);
     setFiltroTalla(null);
@@ -80,46 +113,62 @@ export default function JeansMujerPage() {
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans">
       
-      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR */}
+      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR (MANTENIDO EN NEGRO) */}
       <div className="w-full h-16 md:h-20 bg-black shrink-0" />
       <div className="w-full h-0.5 bg-white shrink-0" />
 
-      {/* 2. LOS 4 BANNERS (Filtran por corte) */}
-      <section className="w-full grid grid-cols-4 h-[50vh] md:h-[75vh] bg-white gap-1 px-1">
-        {cortes.map((corte) => (
-          <div 
-            key={corte.id} 
-            onClick={() => {
-              setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
-              setMenuAbierto(null); // Cierra cualquier menú abierto al tocar un banner
-            }}
-            className="group relative w-full h-full overflow-hidden cursor-pointer bg-gray-100"
-          >
-            <img 
-              src={corte.img} 
-              alt={`Corte ${corte.label}`}
-              className={`w-full h-full object-cover transition-transform duration-700 ${
-                filtroActivo === corte.id ? 'scale-105' : 'group-hover:scale-105'
-              }`}
-            />
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/90 via-black/40 to-transparent z-10" />
-            <div className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ${
-              filtroActivo && filtroActivo !== corte.id ? 'opacity-70' : 'opacity-0 group-hover:opacity-20'
-            }`} />
-            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-30">
-              <h3 className="text-white text-xs md:text-base tracking-widest md:tracking-[0.2em] uppercase font-bold drop-shadow-md">
-                {corte.label}
-              </h3>
-            </div>
-          </div>
-        ))}
+      {/* 2. LOS BANNERS (AHORA EN CARRUSEL DESLIZABLE) */}
+      <section className="w-full bg-white relative">
+        <Swiper
+          modules={[FreeMode]}
+          freeMode={true} // Permite un scroll horizontal fluido
+          spaceBetween={2} // Ligera separación blanca entre banners
+          slidesPerView={2.2} // En móvil muestra 2.2 banners para invitar a deslizar
+          breakpoints={{
+            768: {
+              slidesPerView: 4.5, // En PC muestra 4.5 banners
+            },
+          }}
+          className="w-full h-full"
+        >
+          {cortes.map((corte) => (
+            <SwiperSlide key={corte.id}>
+              <div 
+                onClick={() => {
+                  setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
+                  setMenuAbierto(null);
+                }}
+                className="group relative w-full aspect-[2/3] overflow-hidden cursor-pointer bg-gray-100"
+              >
+                <img 
+                  src={corte.img} 
+                  alt={`Corte ${corte.label}`}
+                  className={`w-full h-full object-cover object-center transition-transform duration-700 ${
+                    filtroActivo === corte.id ? 'scale-105' : 'group-hover:scale-105'
+                  }`}
+                />
+                
+                {/* Overlay blanco sutil para destacar la selección */}
+                <div className={`absolute inset-0 bg-white/50 transition-opacity duration-500 ${
+                  filtroActivo && filtroActivo !== corte.id ? 'opacity-100' : 'opacity-0'
+                }`} />
+                
+                {/* Texto pequeño en negro, esquina inferior izquierda */}
+                <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-30">
+                  <h3 className="text-black text-[10px] md:text-sm font-medium tracking-wide drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
+                    {corte.label}
+                  </h3>
+                </div>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </section>
 
-      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL */}
+      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL (MANTENIDA INTACTA) */}
       <div className="w-full z-90 sticky top-16 md:top-20 shadow-lg relative">
         <div className="w-full bg-black text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
-          {/* Lado Izquierdo: Contador y Limpiar Filtros */}
           <div className="flex items-center space-x-6">
             <span>{productosMostrar.length} ARTÍCULOS</span>
             {(filtroActivo || filtroTalla || filtroColor || orden) && (
@@ -132,10 +181,7 @@ export default function JeansMujerPage() {
             )}
           </div>
 
-          {/* Lado Derecho: Botones Desplegables */}
           <div className="flex items-center space-x-6">
-            
-            {/* Botón TALLA */}
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'talla' ? null : 'talla')}
@@ -145,7 +191,6 @@ export default function JeansMujerPage() {
               </button>
             </div>
 
-            {/* Botón COLOR */}
             <div className="relative hidden md:block">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'color' ? null : 'color')}
@@ -155,7 +200,6 @@ export default function JeansMujerPage() {
               </button>
             </div>
 
-            {/* Botón ORDENAR */}
             <div className="relative">
               <button 
                 onClick={() => setMenuAbierto(menuAbierto === 'orden' ? null : 'orden')}
@@ -225,32 +269,57 @@ export default function JeansMujerPage() {
         )}
       </div>
 
-      {/* 4. CATÁLOGO DE PRODUCTOS (GRID PRO ESTILO LUJO) */}
-      <section className="w-full grow bg-white">
-        <div className="w-full bg-black p-px">
+      {/* 4. CATÁLOGO DE PRODUCTOS (Fondo blanco y cuadrícula negra) */}
+      <section className="w-full grow bg-white pb-12">
+        <div className="w-full bg-black border-y border-black">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             
             {productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
-                <div key={prod.id} className="group bg-white flex flex-col">
+                <div key={prod.id} className="group bg-white flex flex-col relative">
 
-                  {/* IMAGEN */}
-                  <div className="relative w-full aspect-2/3 bg-[#f6f6f6] overflow-hidden">
-                    <Link href={`/producto/${prod.id}`} className="absolute inset-0 z-10">
+                  {/* IMAGEN (Aspecto 2/3) */}
+                  <div className="relative w-full aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
+                    
+                    {/* VISTA MÓVIL: Swiper táctil con bolitas negras */}
+                    <div className="md:hidden w-full h-full">
+                      <Swiper
+                        pagination={{ dynamicBullets: true }}
+                        modules={[Pagination]}
+                        className="w-full h-full"
+                        style={{
+                          "--swiper-pagination-color": "#000",
+                          "--swiper-pagination-bullet-inactive-color": "#000",
+                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
+                          "--swiper-pagination-bullet-size": "5px"
+                        } as React.CSSProperties}
+                      >
+                        {prod.imagenes.map((img, index) => (
+                          <SwiperSlide key={index}>
+                            <Link href={`/producto/${prod.id}`}>
+                              <img src={img} alt={`${prod.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
+                            </Link>
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
+                    </div>
+
+                    {/* VISTA PC: Animación Hover Clásica */}
+                    <Link href={`/producto/${prod.id}`} className="hidden md:block absolute inset-0 z-10">
                       <img 
-                        src={prod.img} 
+                        src={prod.imagenes[0]} 
                         alt={prod.nombre}
                         className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
                       />
                       <img 
-                        src={prod.imgHover} 
+                        src={prod.imagenes[1]} 
                         alt={`${prod.nombre} hover`}
                         className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                       />
                     </Link>
 
                     {/* FAVORITO */}
-                    <button className="absolute top-4 right-4 z-20 text-black hover:text-gray-400 transition">
+                    <button className="absolute top-3 right-3 z-20 text-black hover:text-gray-400 transition bg-white/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
                       <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
@@ -258,13 +327,13 @@ export default function JeansMujerPage() {
                   </div>
 
                   {/* INFO */}
-                  <Link href={`/producto/${prod.id}`} className="w-full text-center px-4 py-5 flex flex-col items-center">
-                    <h3 className="text-black font-medium text-[10px] md:text-xs tracking-[0.15em] uppercase mb-2">
-                      {prod.nombre}
-                    </h3>
-                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest">
+                  <Link href={`/producto/${prod.id}`} className="w-full text-left px-3 py-4 flex flex-col">
+                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest mb-1">
                       ${prod.precio.toLocaleString('es-MX')} MXN
                     </p>
+                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase">
+                      {prod.nombre}
+                    </h3>
                   </Link>
 
                 </div>
