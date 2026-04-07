@@ -51,7 +51,7 @@ export default function MujerLandingPage() {
 
           {[
             { href: '/mujer/jeans', label: 'Jeans', img: imagenes.jeans },
-            { href: '/mujer/vestidos', label: 'Vestidos', img: imagenes.vestidos },
+            { href: '/mujer/vestidos', label: 'Vestidos y faldas', img: imagenes.vestidos },
             { href: '/mujer/chamarras', label: 'Chamarras', img: imagenes.chamarras },
             { href: '/mujer/accesorios', label: 'Accesorios', img: imagenes.accesorios }
           ].map((item, i) => (

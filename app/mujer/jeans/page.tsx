@@ -23,10 +23,10 @@ const cortes = [
   { id: 'cargo', label: 'Cargo', img: 'https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?q=80&w=800' },
   { id: 'skinny', label: 'Skinny', img: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?q=80&w=800' },
   { id: 'colombiano', label: 'Colombiano', img: 'https://images.pexels.com/photos/1336873/pexels-photo-1336873.jpeg?auto=compress&cs=tinysrgb&w=800&q=80' },
-  { id: 'barrel', label: 'Barrel', img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' } // Nuevo corte añadido
+  { id: 'barrel', label: 'Barrel', img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' } // Corte añadido
 ];
 
-// 2. PRODUCTOS SIMULADOS MUJER
+// 2. PRODUCTOS SIMULADOS MUJER (Con arreglo de imágenes para el Swiper del producto)
 const productosDb = [
   { id: 'JM-01', nombre: 'Holgado 90s Vintage', precio: 2499, corte: 'holgado', color: 'Azul', tallas: ['24', '26', '28'],
     imagenes: [
@@ -117,7 +117,7 @@ export default function JeansMujerPage() {
       <div className="w-full h-16 md:h-20 bg-black shrink-0" />
       <div className="w-full h-0.5 bg-white shrink-0" />
 
-      {/* 2. LOS BANNERS (AHORA EN CARRUSEL DESLIZABLE) */}
+      {/* 2. LOS BANNERS (AHORA EN CARRUSEL DESLIZABLE - Proporción más alta aspect-[9/16]) */}
       <section className="w-full bg-white relative">
         <Swiper
           modules={[FreeMode]}
@@ -138,7 +138,8 @@ export default function JeansMujerPage() {
                   setFiltroActivo(corte.id === filtroActivo ? null : corte.id);
                   setMenuAbierto(null);
                 }}
-                className="group relative w-full aspect-[2/3] overflow-hidden cursor-pointer bg-gray-100"
+                // aspect-[9/16] los hace mucho más largos (verticales) y elimina la sensación horizontal
+                className="group relative w-full aspect-[9/16] overflow-hidden cursor-pointer bg-gray-100"
               >
                 <img 
                   src={corte.img} 
@@ -165,8 +166,9 @@ export default function JeansMujerPage() {
         </Swiper>
       </section>
 
-      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL (MANTENIDA INTACTA) */}
-      <div className="w-full z-90 sticky top-16 md:top-20 shadow-lg relative">
+      {/* 3. BARRA NEGRA DE HERRAMIENTAS FUNCIONAL (z-index ajustado a z-40) */}
+      {/* Se bajó de z-[90] a z-40 para que los menús principales floten por encima */}
+      <div className="w-full z-40 sticky top-16 md:top-20 shadow-lg relative">
         <div className="w-full bg-black text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
           <div className="flex items-center space-x-6">

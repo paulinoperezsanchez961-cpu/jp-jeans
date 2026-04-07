@@ -5,8 +5,21 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link';
 import HeroBanner from "@/components/HeroBanner";
 import Footer from "@/components/Footer";
+// Importamos el botón de registro de Clerk para el popup
+import { SignUpButton } from "@clerk/nextjs";
 
-// Datos de Imágenes con Doble Dirección de Arte (Desktop y Mobile Crop)
+// ==============================================================================
+// 📝 GUÍA PARA CAMBIAR LAS IMÁGENES (BANNERS) DE MANERA SENCILLA
+// ==============================================================================
+// Para cambiar una imagen, solo reemplaza el enlace (URL) que está entre las comillas simples.
+// 
+// 'd': Significa "Desktop" (Computadora). Usa imágenes horizontales o panorámicas.
+// 'm': Significa "Mobile" (Celular). Usa imágenes verticales para que cubran toda la pantalla.
+// 
+// Tip Pro: Si subes tus propias imágenes, asegúrate de que pesen menos de 500kb 
+// para que la página siga cargando a la velocidad de la luz.
+// ==============================================================================
+
 const imgs = {
   hombre: {
     d: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1600&auto=format&fit=crop',
@@ -38,6 +51,9 @@ const imagenesCarrusel = [
 
 export default function Home() {
   const [images, setImages] = useState(imagenesCarrusel);
+  
+  // ESTADO PARA EL POPUP DE DESCUENTO
+  const [showPromo, setShowPromo] = useState(false);
 
   // Parallax Configurado: De arriba hacia abajo hasta descansar en la esquina
   const refNovedades = useRef(null);
@@ -49,15 +65,65 @@ export default function Home() {
   const yKids = useTransform(scrollKids, [0, 1], ["-50vh", "0vh"]);
 
   useEffect(() => {
+    // Temporizador del carrusel
     const timer = setInterval(() => {
       setImages((prev) => [...prev.slice(1), prev[0]]);
     }, 3000);
+    
+    // LÓGICA DEL POPUP: Mostrar después de 3 segundos si no lo ha cerrado antes
+    const hasSeenPromo = localStorage.getItem('jpjeans_promo_cerrada');
+    if (!hasSeenPromo) {
+      const promoTimer = setTimeout(() => setShowPromo(true), 3000);
+      return () => {
+        clearInterval(timer);
+        clearTimeout(promoTimer);
+      };
+    }
+    
     return () => clearInterval(timer);
   }, []);
 
+  // Función para cerrar el popup y no molestar más
+  const cerrarPromo = () => {
+    setShowPromo(false);
+    localStorage.setItem('jpjeans_promo_cerrada', 'true');
+  };
+
   return (
-    <main className="bg-black min-h-screen w-full overflow-hidden text-white">
+    <main className="bg-black min-h-screen w-full overflow-hidden text-white relative">
       
+      {/* ============================================================================== */}
+      {/* POPUP DE 30% DE DESCUENTO (Elegante y no estorboso) */}
+      {/* ============================================================================== */}
+      <AnimatePresence>
+        {showPromo && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[120] w-[calc(100%-3rem)] md:w-[340px] bg-[#0a0a0a] border border-white/10 p-6 shadow-2xl"
+          >
+            {/* Botón Cerrar */}
+            <button onClick={cerrarPromo} className="absolute top-3 right-4 text-white/40 hover:text-white transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            
+            <h3 className="font-serif text-lg tracking-[0.15em] uppercase text-white mb-2">JP Jeans Club</h3>
+            <p className="text-gray-400 text-[11px] tracking-widest uppercase leading-relaxed mb-6">
+              Regístrate ahora y obtén un <span className="text-white font-bold">30% de descuento</span> en tu primera compra.
+            </p>
+            
+            <SignUpButton mode="modal">
+              <button onClick={cerrarPromo} className="w-full bg-white text-black py-3 text-[10px] font-bold tracking-[0.3em] uppercase hover:bg-gray-200 transition-colors">
+                Obtener 30% OFF
+              </button>
+            </SignUpButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ============================================================================== */}
+
       {/* 1. HERO PRINCIPAL */}
       <div className="w-full relative mt-16 md:mt-0 border-b border-white/10">
         <HeroBanner />
@@ -72,17 +138,13 @@ export default function Home() {
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.m})` }} />
           <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
           
-          {/* MÓVIL (Esquina inferior izquierda, estático, fino) */}
           <div className="absolute bottom-6 left-6 z-10 md:hidden flex flex-col items-start">
             <p className="font-sans font-light text-[11px] tracking-[0.15em] text-white uppercase mb-2 drop-shadow-md">Novedades</p>
-            {/* LINK ACTUALIZADO */}
             <Link href="/novedades?genero=hombre" className="font-sans font-thin text-[11px] tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Novedades Hombre</Link>
           </div>
 
-          {/* PC (Parallax) */}
           <motion.div style={{ y: yNovedades }} className="hidden md:flex absolute bottom-12 left-8 lg:bottom-16 lg:left-12 flex-col items-start z-10">
              <p className="font-sans font-light text-sm lg:text-base tracking-[0.15em] text-white uppercase mb-4 drop-shadow-md">Novedades</p>
-             {/* LINK ACTUALIZADO */}
              <Link href="/novedades?genero=hombre" className="font-sans font-thin text-xs lg:text-sm tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Novedades Hombre</Link>
           </motion.div>
         </div>
@@ -91,19 +153,15 @@ export default function Home() {
         <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.m})` }} />
-          <div className="absolute inset-0 bg-black/20 md:bg-linear-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
+          <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
           
-          {/* MÓVIL */}
           <div className="absolute bottom-6 left-6 z-10 md:hidden flex flex-col items-start">
             <p className="font-sans font-light text-[11px] tracking-[0.15em] text-white uppercase mb-2 drop-shadow-md">Novedades</p>
-            {/* LINK ACTUALIZADO */}
             <Link href="/novedades?genero=mujer" className="font-sans font-thin text-[11px] tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Novedades Mujer</Link>
           </div>
 
-          {/* PC */}
           <motion.div style={{ y: yNovedades }} className="hidden md:flex absolute bottom-12 left-8 lg:bottom-16 lg:left-12 flex-col items-start z-10">
              <p className="font-sans font-light text-sm lg:text-base tracking-[0.15em] text-white uppercase mb-4 drop-shadow-md">Novedades</p>
-             {/* LINK ACTUALIZADO */}
              <Link href="/novedades?genero=mujer" className="font-sans font-thin text-xs lg:text-sm tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Novedades Mujer</Link>
           </motion.div>
         </div>
@@ -143,13 +201,11 @@ export default function Home() {
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
           
-          {/* MÓVIL */}
           <div className="absolute bottom-6 left-6 z-10 md:hidden flex flex-col items-start">
             <p className="font-sans font-light text-[11px] tracking-[0.15em] text-white uppercase mb-2 drop-shadow-md">Para Ella</p>
             <Link href="/nina" className="font-sans font-thin text-[11px] tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Colección Niña</Link>
           </div>
 
-          {/* PC */}
           <motion.div style={{ y: yKids }} className="hidden md:flex absolute bottom-12 left-8 lg:bottom-16 lg:left-12 flex-col items-start z-10">
              <p className="font-sans font-light text-sm lg:text-base tracking-[0.15em] text-white uppercase mb-4 drop-shadow-md">Para Ella</p>
              <Link href="/nina" className="font-sans font-thin text-xs lg:text-sm tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Colección Niña</Link>
@@ -162,13 +218,11 @@ export default function Home() {
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nino.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
           
-          {/* MÓVIL */}
           <div className="absolute bottom-6 left-6 z-10 md:hidden flex flex-col items-start">
             <p className="font-sans font-light text-[11px] tracking-[0.15em] text-white uppercase mb-2 drop-shadow-md">Para Él</p>
             <Link href="/nino" className="font-sans font-thin text-[11px] tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Colección Niño</Link>
           </div>
 
-          {/* PC */}
           <motion.div style={{ y: yKids }} className="hidden md:flex absolute bottom-12 left-8 lg:bottom-16 lg:left-12 flex-col items-start z-10">
              <p className="font-sans font-light text-sm lg:text-base tracking-[0.15em] text-white uppercase mb-4 drop-shadow-md">Para Él</p>
              <Link href="/nino" className="font-sans font-thin text-xs lg:text-sm tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Colección Niño</Link>
@@ -183,13 +237,11 @@ export default function Home() {
         <div className="md:hidden absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${imgs.rebajas.m})` }} />
         <div className="absolute inset-0 bg-black/20" />
 
-        {/* Móvil estático unificado */}
         <div className="absolute bottom-6 left-6 z-10 md:hidden flex flex-col items-start">
           <p className="font-sans font-light text-[11px] tracking-[0.15em] text-white uppercase mb-2 drop-shadow-md">La Colección Zero</p>
           <Link href="/rebajas" className="font-sans font-thin text-[11px] tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Descubrir Rebajas</Link>
         </div>
 
-        {/* PC Estático */}
         <div className="hidden md:flex absolute bottom-12 left-8 lg:bottom-16 lg:left-12 flex-col items-start z-10">
           <p className="font-sans font-light text-sm lg:text-base tracking-[0.15em] text-white uppercase mb-4 drop-shadow-md">La Colección Zero</p>
           <Link href="/rebajas" className="font-sans font-thin text-xs lg:text-sm tracking-[0.05em] text-white uppercase hover:text-white/70 transition-colors border-b border-white/50 pb-0.5">Descubrir Rebajas</Link>

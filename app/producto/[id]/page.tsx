@@ -114,26 +114,21 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             </Swiper>
           </div>
 
-          {/* VISTA PC: Cuadrícula original (imágenes alargadas aspect-[2/3]) */}
+          {/* VISTA PC: Cuadrícula original (TODAS verticales aspect-[2/3]) */}
           <div className="hidden md:grid md:grid-cols-2 gap-2 md:gap-4">
-            {productoSimulado.imagenes.map((img, index) => {
-              const isFifthItem = index === 4;
-
-              return (
+            {productoSimulado.imagenes.map((img, index) => (
+              <div 
+                key={index} 
+                onClick={() => setLightboxIndex(index)}
+                // Eliminamos col-span-2. Ahora todas son siempre col-span-1 y aspect-[2/3]
+                className="relative overflow-hidden group bg-white/5 cursor-zoom-in col-span-1 aspect-[2/3]"
+              >
                 <div 
-                  key={index} 
-                  onClick={() => setLightboxIndex(index)}
-                  className={`relative overflow-hidden group bg-white/5 cursor-zoom-in ${
-                    isFifthItem ? 'col-span-2 aspect-video' : 'col-span-1 aspect-[2/3]' 
-                  }`}
-                >
-                  <div 
-                    className="absolute inset-0 bg-cover bg-top transition-transform duration-1000 group-hover:scale-105"
-                    style={{ backgroundImage: `url(${img})` }}
-                  />
-                </div>
-              );
-            })}
+                  className="absolute inset-0 bg-cover bg-top transition-transform duration-1000 group-hover:scale-105"
+                  style={{ backgroundImage: `url(${img})` }}
+                />
+              </div>
+            ))}
           </div>
 
         </div>
@@ -228,13 +223,12 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* NUEVA SECCIÓN: COMPLETAR EL LOOK (PRODUCTOS RELACIONADOS) */}
+      {/* SECCIÓN INTACTA: COMPLETAR EL LOOK (PRODUCTOS RELACIONADOS) */}
       <section className="w-full max-w-[1450px] mx-auto px-4 md:px-8 mt-24 pt-16 border-t border-white/10">
         <h3 className="font-serif text-2xl md:text-3xl tracking-[0.2em] uppercase mb-10 text-center md:text-left">
           También te puede interesar
         </h3>
         
-        {/* Cuadrícula de productos relacionados con el mismo estilo que el catálogo */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/20 p-px">
           {productosRelacionados.map((prod) => (
             <div key={prod.id} className="group bg-black flex flex-col relative">

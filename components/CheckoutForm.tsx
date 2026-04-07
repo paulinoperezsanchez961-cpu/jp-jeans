@@ -3,7 +3,8 @@
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 
-export default function CheckoutForm() {
+// Le indicamos al componente que ahora debe recibir el candado de seguridad (clientSecret)
+export default function CheckoutForm({ clientSecret }: { clientSecret: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -11,29 +12,43 @@ export default function CheckoutForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!stripe || !elements) return;
+    
+    // Si Stripe no ha cargado o falta la llave del servidor, bloqueamos el intento
+    if (!stripe || !elements || !clientSecret) return;
 
     setProcesando(true);
+    setError(null); // Limpiamos errores previos
+    
     const cardElement = elements.getElement(CardNumberElement);
 
     if (cardElement) {
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
+      // 🔒 AQUÍ OCURRE LA MAGIA DE SEGURIDAD: 
+      // Confirmamos el pago cruzando la tarjeta con la intención de pago del backend.
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
       });
 
       if (error) {
-        setError(error.message || 'Ocurrió un error con la tarjeta.');
+        // El banco rechazó la tarjeta, no tiene fondos o hubo un error de red
+        setError(error.message || 'Ocurrió un error al procesar la tarjeta.');
         setProcesando(false);
-      } else {
-        console.log('Pago exitoso, ID:', paymentMethod.id);
-        alert('¡Pago autorizado! El Cerebro registrará la venta.');
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // ¡El dinero ya está seguro en tu cuenta de Stripe!
+        console.log('Pago seguro exitoso, ID:', paymentIntent.id);
+        alert('¡Pago autorizado y asegurado! El Cerebro registrará la venta.');
+        
+        // Aquí agregarías la lógica para vaciar el carrito y redirigir:
+        // clearCart();
+        // router.push('/gracias');
+        
         setProcesando(false);
       }
     }
   };
 
-  // Estilo minimalista para los 3 campos
+  // Estilo minimalista para los 3 campos (INTACTO)
   const ELEMENT_OPTIONS = {
     style: {
       base: {
@@ -75,7 +90,7 @@ export default function CheckoutForm() {
         disabled={!stripe || procesando}
         className="w-full bg-white text-black py-4 text-[10px] tracking-[0.3em] font-bold uppercase hover:bg-gray-200 transition-all mt-8 disabled:opacity-50"
       >
-        {procesando ? 'Procesando...' : 'Pagar de forma segura'}
+        {procesando ? 'Procesando de forma segura...' : 'Pagar de forma segura'}
       </button>
     </form>
   );

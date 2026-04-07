@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext'; 
+// 1. IMPORTACIONES DE CLERK (Actualizado a la versión Core 3)
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // CORRECCIÓN: Se extrae setIsCartOpen en lugar del antiguo openCart
   const { setIsCartOpen, cartCount } = useCart(); 
 
   useEffect(() => {
@@ -61,11 +62,35 @@ export default function Navbar() {
             <button className="text-white drop-shadow-md transition-colors hover:text-white/70 hidden sm:block">
               <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </button>
-            <button className="text-white drop-shadow-md transition-colors hover:text-white/70">
-              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            </button>
-            {/* CORRECCIÓN: Se actualiza el evento onClick para abrir la bolsa */}
-            <button onClick={() => setIsCartOpen(true)} className="text-white drop-shadow-md transition-colors relative hover:text-white/70">
+            
+            {/* ================= BOTÓN DE CUENTA (CLERK CORE 3) ================= */}
+            <div className="flex items-center justify-center">
+              
+              {/* Cuando no ha iniciado sesión */}
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button className="text-white drop-shadow-md transition-colors hover:text-white/70 flex items-center justify-center">
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  </button>
+                </SignInButton>
+              </Show>
+
+              {/* Cuando ya inició sesión */}
+              <Show when="signed-in">
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-5 h-5 md:w-6 md:h-6 rounded-full border border-white/20 hover:border-white transition-colors"
+                    }
+                  }}
+                />
+              </Show>
+              
+            </div>
+            {/* ========================================================== */}
+
+            {/* BOTÓN DEL CARRITO */}
+            <button onClick={() => setIsCartOpen(true)} className="text-white drop-shadow-md transition-colors relative hover:text-white/70 flex items-center justify-center">
               <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full bg-white text-black font-bold">
@@ -85,6 +110,15 @@ export default function Navbar() {
               {navLinks.map((link) => (
                 <Link key={link.name} href={link.href} onClick={() => setMobileMenuOpen(false)} className="text-2xl font-serif tracking-[0.2em] uppercase text-white border-b border-white/10 pb-4">{link.name}</Link>
               ))}
+              
+              {/* Botón de cuenta extra para el menú móvil */}
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button onClick={() => setMobileMenuOpen(false)} className="text-2xl font-serif tracking-[0.2em] uppercase text-white/50 text-left hover:text-white transition-colors">
+                    Iniciar Sesión
+                  </button>
+                </SignInButton>
+              </Show>
             </nav>
           </motion.div>
         )}
