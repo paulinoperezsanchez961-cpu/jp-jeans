@@ -29,8 +29,8 @@ async function generarTokenAcceso() {
 
 export async function POST(request: Request) {
   try {
-    // 1. Recibimos SOLO qué quiere comprar el cliente (IDs y cantidades)
-    const { cart } = await request.json();
+    // 1. AHORA RECIBIMOS EL CARRITO Y EL CÓDIGO DE DESCUENTO
+    const { cart, codigoDescuento } = await request.json();
 
     // 2. RECALCULAMOS el precio total leyendo la base de datos (Ignoramos el precio del frontend)
     let totalReal = 0;
@@ -46,7 +46,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Carrito inválido' }, { status: 400 });
     }
 
-    // 3. Generamos la orden directamente con PayPal desde el servidor
+    // 3. APLICAMOS EL DESCUENTO DE MANERA SEGURA EN EL SERVIDOR
+    if (codigoDescuento === 'ZERO30') {
+      totalReal = totalReal * 0.70; // 30% de descuento
+    } else if (codigoDescuento === 'VIP15') {
+      totalReal = totalReal * 0.85; // 15% de descuento
+    }
+
+    // IMPORTANTE PARA PAYPAL: Exige que el formato de moneda tenga máximo 2 decimales.
+    const totalFormateado = totalReal.toFixed(2);
+
+    // 4. Generamos la orden directamente con PayPal desde el servidor
     const accessToken = await generarTokenAcceso();
     const paypalResponse = await fetch(`${PAYPAL_API_URL}/v2/checkout/orders`, {
       method: 'POST',
@@ -60,7 +70,7 @@ export async function POST(request: Request) {
           {
             amount: {
               currency_code: 'MXN',
-              value: totalReal.toString(), // Este valor es 100% seguro
+              value: totalFormateado, // Este valor ya tiene el descuento y los 2 decimales exactos
             },
           },
         ],
@@ -69,7 +79,7 @@ export async function POST(request: Request) {
 
     const orden = await paypalResponse.json();
 
-    // 4. Le devolvemos al frontend ÚNICAMENTE el ID seguro de la orden
+    // 5. Le devolvemos al frontend ÚNICAMENTE el ID seguro de la orden
     return NextResponse.json({ id: orden.id });
 
   } catch (error) {
