@@ -14,7 +14,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 
 const productoSimulado = {
-  id: "JD-001",
+  id: "C-2000", // EL CÓDIGO TÉCNICO EXACTO DEL CORTE
   nombre: "Jeans Dark Premium",
   precioTexto: "$2,499.00 MXN",
   precioNumerico: 2499.00,
@@ -31,10 +31,10 @@ const productoSimulado = {
 
 // Array simulado para la sección "También te puede interesar"
 const productosRelacionados = [
-  { id: 'J-02', nombre: 'Cargo Parachute Black', precio: 2799, img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800' },
-  { id: 'J-03', nombre: 'Slim Fit Essential Ice', precio: 2199, img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800' },
-  { id: 'J-04', nombre: 'Recto Classic Raw', precio: 2299, img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
-  { id: 'J-05', nombre: 'Baggy Washed Grey', precio: 2599, img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' }
+  { id: 'C-2001', nombre: 'Cargo Parachute Black', precio: 2799, img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800' },
+  { id: 'C-2002', nombre: 'Slim Fit Essential Ice', precio: 2199, img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800' },
+  { id: 'C-2003', nombre: 'Recto Classic Raw', precio: 2299, img: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=800' },
+  { id: 'C-2004', nombre: 'Baggy Washed Grey', precio: 2599, img: 'https://images.unsplash.com/photo-1516826957135-73318231cb6c?q=80&w=800' }
 ];
 
 export default function ProductPage({ params }: { params: { id: string } }) {
@@ -100,7 +100,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <Swiper
               pagination={{ clickable: true, dynamicBullets: true }}
               modules={[Pagination]}
-              className="w-full aspect-[2/3] bg-[#111]" // aspect-[2/3] hace la imagen más alta
+              className="w-full aspect-[2/3] bg-[#111]" 
             >
               {productoSimulado.imagenes.map((img, index) => (
                 <SwiperSlide key={index} onClick={() => setLightboxIndex(index)}>
@@ -120,7 +120,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
               <div 
                 key={index} 
                 onClick={() => setLightboxIndex(index)}
-                // Eliminamos col-span-2. Ahora todas son siempre col-span-1 y aspect-[2/3]
                 className="relative overflow-hidden group bg-white/5 cursor-zoom-in col-span-1 aspect-[2/3]"
               >
                 <div 
@@ -203,9 +202,17 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
             <div className="pt-8">
               <h3 className="font-sans text-[10px] tracking-[0.2em] uppercase mb-4 opacity-70">Detalles</h3>
+              
               <p className="font-sans text-sm leading-relaxed opacity-70">
                 {productoSimulado.descripcion}
               </p>
+
+              {/* AQUÍ VA EL IDENTIFICADOR TÉCNICO EXACTO (Debajo de la descripción) */}
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <p className="font-mono text-[11px] tracking-[0.15em] text-white/50 uppercase">
+                  IDENTIFICADOR: {productoSimulado.id}
+                </p>
+              </div>
             </div>
 
             <div className="border-t border-b border-white/20 divide-y divide-white/20 mt-8">
