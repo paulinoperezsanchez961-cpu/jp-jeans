@@ -168,10 +168,10 @@ export default function ChamarrasPage() {
                         modules={[Pagination]}
                         className="w-full h-full"
                         style={{
-                          "--swiper-pagination-color": "#000",
-                          "--swiper-pagination-bullet-inactive-color": "#000",
-                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
-                          "--swiper-pagination-bullet-size": "5px"
+                          "--swiper-pagination-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-opacity": "0.3",
+                          "--swiper-pagination-bullet-size": "6px"
                         } as React.CSSProperties}
                       >
                         {prod.imagenes.map((img, index) => (

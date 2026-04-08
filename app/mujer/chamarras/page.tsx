@@ -12,63 +12,73 @@ import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BASE DE DATOS DE CHAMARRAS MUJER (Actualizada con arreglo de imágenes)
+// 1. BANNERS DOBLES (Chamarras y Tops)
+const categorias = [
+  { id: 'chamarra', label: 'Chamarras', img: 'https://images.unsplash.com/photo-1544642899-f0d6e5f6ed6f?q=80&w=800' },
+  { id: 'top', label: 'Tops', img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800' } // Imagen de Top
+];
+
+// 2. BASE DE DATOS ACTUALIZADA (Ahora incluye la propiedad "categoria")
 const productosDb = [
-  { id: 'CHM-01', nombre: 'Biker Leather Suede', precio: 3299, tono: 'Oscuro', tallas: ['CH', 'M'],
+  { id: 'CHM-01', nombre: 'Biker Leather Suede', precio: 3299, categoria: 'chamarra', tono: 'Oscuro', tallas: ['CH', 'M'],
     imagenes: [
       'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800', 
       'https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?q=80&w=800',
-      'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800' // Repetida para demo
+      'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800' 
     ] 
   },
-  { id: 'CHM-02', nombre: 'Denim Jacket Oversize', precio: 2199, tono: 'Claro', tallas: ['CH', 'M', 'G'],
+  { id: 'CHM-02', nombre: 'Denim Jacket Oversize', precio: 2199, categoria: 'chamarra', tono: 'Claro', tallas: ['CH', 'M', 'G'],
     imagenes: [
       'https://images.unsplash.com/photo-1544642899-f0d6e5f6ed6f?q=80&w=800', 
       'https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?q=80&w=800',
       'https://images.unsplash.com/photo-1544642899-f0d6e5f6ed6f?q=80&w=800'
     ]
   },
-  { id: 'CHM-03', nombre: 'Trench Coat Essential', precio: 4599, tono: 'Claro', tallas: ['M', 'G'],
+  { id: 'CHM-03', nombre: 'Trench Coat Essential', precio: 4599, categoria: 'chamarra', tono: 'Claro', tallas: ['M', 'G'],
     imagenes: [
       'https://images.unsplash.com/photo-1545431780-e7fa69911e2f?q=80&w=800', 
       'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?q=80&w=800',
       'https://images.unsplash.com/photo-1545431780-e7fa69911e2f?q=80&w=800'
     ]
   },
-  { id: 'CHM-04', nombre: 'Bomber Satin Black', precio: 2899, tono: 'Oscuro', tallas: ['CH', 'M', 'G'],
+  // Agregué algunos "Tops" de prueba para que el filtro funcione
+  { id: 'TPM-01', nombre: 'Top Ribbed Essential', precio: 499, categoria: 'top', tono: 'Oscuro', tallas: ['CH', 'M'],
     imagenes: [
-      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800', 
-      'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?q=80&w=800',
-      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800'
+      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800', 
+      'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800',
+      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800'
     ]
   },
-  { id: 'CHM-05', nombre: 'Puffer Cropped Nocturna', precio: 3499, tono: 'Oscuro', tallas: ['CH', 'M'],
+  { id: 'TPM-02', nombre: 'Corset Top Satin', precio: 899, categoria: 'top', tono: 'Claro', tallas: ['CH', 'M', 'G'],
+    imagenes: [
+      'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800', 
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800',
+      'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800'
+    ]
+  },
+  { id: 'CHM-05', nombre: 'Puffer Cropped Nocturna', precio: 3499, categoria: 'chamarra', tono: 'Oscuro', tallas: ['CH', 'M'],
     imagenes: [
       'https://images.unsplash.com/photo-1614676471928-2ed0ad1061a4?q=80&w=800', 
       'https://images.unsplash.com/photo-1544923246-77307dd654ca?q=80&w=800',
       'https://images.unsplash.com/photo-1614676471928-2ed0ad1061a4?q=80&w=800'
     ] 
-  },
-  { id: 'CHM-06', nombre: 'Chaqueta Lino Arena', precio: 1999, tono: 'Claro', tallas: ['M', 'G'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?q=80&w=800', 
-      'https://images.unsplash.com/photo-1548126032-079a0fb0099d?q=80&w=800',
-      'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?q=80&w=800'
-    ]
   }
 ];
 
 export default function ChamarrasMujerPage() {
+  const [filtroActivo, setFiltroActivo] = useState<string | null>(null); // Filtro para Chamarras vs Tops
   const [filtroTalla, setFiltroTalla] = useState<string | null>(null);
   const [filtroTono, setFiltroTono] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState<'talla' | 'tono' | null>(null);
 
   // LÓGICA DE FILTRADO
   let productosMostrar = [...productosDb];
+  if (filtroActivo) productosMostrar = productosMostrar.filter(p => p.categoria === filtroActivo);
   if (filtroTalla) productosMostrar = productosMostrar.filter(p => p.tallas.includes(filtroTalla));
   if (filtroTono) productosMostrar = productosMostrar.filter(p => p.tono === filtroTono);
 
   const limpiarFiltros = () => {
+    setFiltroActivo(null);
     setFiltroTalla(null);
     setFiltroTono(null);
     setMenuAbierto(null);
@@ -77,18 +87,41 @@ export default function ChamarrasMujerPage() {
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans">
       
-      {/* ESPACIO PARA NAVBAR */}
+      {/* 1. ESPACIO DEL ENCABEZADO Y SEPARADOR EN NEGRO */}
       <div className="w-full h-16 md:h-20 bg-black shrink-0" />
+      <div className="w-full h-0.5 bg-white shrink-0" />
 
-      {/* TÍTULO CHAMARRAS (Limpio y minimalista) */}
-      <div className="w-full pt-8 pb-10 md:pt-12 md:pb-16 text-center bg-white">
-        <h1 className="text-black text-3xl md:text-5xl font-light tracking-[0.3em] uppercase">
-          Chamarras
-        </h1>
-        <p className="text-gray-400 text-[10px] md:text-xs tracking-[0.2em] mt-4 uppercase">
-          Colección Mujer JP Jeans
-        </p>
-      </div>
+      {/* 2. LOS 2 BANNERS DOBLES (Chamarras y Tops) */}
+      <section className="w-full grid grid-cols-2 bg-white">
+        {categorias.map((cat) => (
+          <div 
+            key={cat.id} 
+            onClick={() => {
+              setFiltroActivo(cat.id === filtroActivo ? null : cat.id);
+              setMenuAbierto(null);
+            }}
+            className="group relative w-full aspect-[9/16] md:aspect-[3/4] overflow-hidden cursor-pointer bg-gray-100"
+          >
+            <img 
+              src={cat.img} 
+              alt={cat.label}
+              className={`w-full h-full object-cover object-center transition-transform duration-700 ${
+                filtroActivo === cat.id ? 'scale-105' : 'group-hover:scale-105'
+              }`}
+            />
+            
+            <div className={`absolute inset-0 bg-white/50 transition-opacity duration-500 ${
+              filtroActivo && filtroActivo !== cat.id ? 'opacity-100' : 'opacity-0'
+            }`} />
+            
+            <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-30">
+              <h3 className="text-black text-sm md:text-xl font-bold tracking-[0.2em] uppercase drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
+                {cat.label}
+              </h3>
+            </div>
+          </div>
+        ))}
+      </section>
 
       {/* BARRA DE FILTROS (z-40 para no chocar con el Navbar) */}
       <div className="w-full z-40 sticky top-16 md:top-20 shadow-sm border-y border-black">
@@ -96,9 +129,9 @@ export default function ChamarrasMujerPage() {
           
           <div className="flex items-center space-x-6">
             <span>{productosMostrar.length} ARTÍCULOS</span>
-            {(filtroTalla || filtroTono) && (
+            {(filtroActivo || filtroTalla || filtroTono) && (
               <button onClick={limpiarFiltros} className="text-gray-400 hover:text-white transition-colors border-b border-gray-400 hover:border-white">
-                LIMPIAR
+                LIMPIAR TODO
               </button>
             )}
           </div>
@@ -227,9 +260,9 @@ export default function ChamarrasMujerPage() {
               ))
             ) : (
               <div className="col-span-2 md:col-span-4 bg-white py-20 text-center flex flex-col items-center">
-                <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay chamarras que coincidan con tu búsqueda.</p>
+                <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
                 <button onClick={limpiarFiltros} className="border-b border-black text-black text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
-                  Ver todas las chamarras
+                  Ver todo
                 </button>
               </div>
             )}

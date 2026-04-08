@@ -280,10 +280,10 @@ export default function JeansHombrePage() {
                         className="w-full h-full"
                         // Inyección de estilos para bolitas negras
                         style={{
-                          "--swiper-pagination-color": "#000",
-                          "--swiper-pagination-bullet-inactive-color": "#000",
-                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
-                          "--swiper-pagination-bullet-size": "5px"
+                          "--swiper-pagination-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-opacity": "0.3",
+                          "--swiper-pagination-bullet-size": "6px"
                         } as React.CSSProperties}
                       >
                         {prod.imagenes.map((img, index) => (
