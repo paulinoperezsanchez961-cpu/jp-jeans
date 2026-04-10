@@ -8,15 +8,23 @@ const BASE_URL = 'https://api.jpjeansvip.com/api';
 
 // =========================================================
 // 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB
-// Configura automáticamente la interfaz para todos los banners
 // =========================================================
-type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta'; aspect?: number; };
+type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
 const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   inicio: [
-    { id: 'hero', titulo: 'Hero Principal (Inicio)', tipo: 'hero' }
+    // 🚨 EL CARRUSEL VERTICAL DEL INICIO (9:16)
+    { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
+    { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
+    { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
+    // 🚨 SECCIONES DE NOVEDADES Y OFERTAS DE LA PORTADA
+    { id: 'home_mujer', titulo: 'Novedades: MUJER', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'home_hombre', titulo: 'Novedades: HOMBRE', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'home_nina', titulo: 'Novedades: NIÑA', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'home_nino', titulo: 'Novedades: NIÑO', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'home_rebajas', titulo: 'Ofertas: REBAJAS', tipo: 'tarjeta', aspect: 2/3 },
   ],
   hombre: [
-    { id: 'hombre', titulo: 'Hero Hombre', tipo: 'hero' },
+    { id: 'hombre', titulo: 'Hero Hombre', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'h_cat_jeans', titulo: 'Categoría: Jeans', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_playeras', titulo: 'Categoría: Playeras', tipo: 'tarjeta', aspect: 2/3 },
@@ -27,7 +35,7 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'h_corte_slim', titulo: 'Corte Jeans: Slim', tipo: 'tarjeta', aspect: 9/16 },
   ],
   mujer: [
-    { id: 'mujer', titulo: 'Hero Mujer', tipo: 'hero' },
+    { id: 'mujer', titulo: 'Hero Mujer', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'm_cat_jeans', titulo: 'Categoría: Jeans', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_vestidos', titulo: 'Categoría: Vestidos y Faldas', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
@@ -45,9 +53,16 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_sub_chamarras', titulo: 'Sub: Chamarras', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_sub_tops', titulo: 'Sub: Tops', tipo: 'tarjeta', aspect: 9/16 },
   ],
-  nina: [ { id: 'nina', titulo: 'Hero Niña', tipo: 'hero' } ],
-  nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero' } ],
-  rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero' } ]
+  nina: [ { id: 'nina', titulo: 'Hero Niña', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
+  nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
+  rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
+  complementos: [
+    // 🚨 EL FOOTER HORIZONTAL PANORÁMICO (16:9)
+    { id: 'footer_slide_1', titulo: 'Footer Carousel - Imagen 1', tipo: 'tarjeta', aspect: 16/9 },
+    { id: 'footer_slide_2', titulo: 'Footer Carousel - Imagen 2', tipo: 'tarjeta', aspect: 16/9 },
+    { id: 'footer_slide_3', titulo: 'Footer Carousel - Imagen 3', tipo: 'tarjeta', aspect: 16/9 },
+    { id: 'footer_slide_4', titulo: 'Footer Carousel - Imagen 4', tipo: 'tarjeta', aspect: 16/9 },
+  ]
 };
 
 export default function AdminDashboard() {
@@ -257,7 +272,6 @@ export default function AdminDashboard() {
           {menuActivo === 'banners' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
-              {/* NAVEGACIÓN DE SECCIONES (Pills) */}
               <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 pb-6">
                 {Object.keys(SECCIONES_BANNERS).map((sec) => (
                   <button 
@@ -272,7 +286,6 @@ export default function AdminDashboard() {
                 ))}
               </div>
 
-              {/* RENDERIZADO DINÁMICO DE BLOQUES */}
               <div className="space-y-8">
                 {SECCIONES_BANNERS[seccionBannerActiva].map((item) => (
                   <div key={item.id} className="bg-white p-5 border border-gray-200 shadow-sm relative overflow-hidden">
@@ -282,32 +295,36 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Pantalla PC (16:9)</span>
-                            <div className="w-full aspect-video bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">
+                              Pantalla PC {item.aspectDesktop === 9/16 ? '(Vertical)' : '(Horizontal)'}
+                            </span>
+                            <div style={{ aspectRatio: item.aspectDesktop || 16/9 }} className="w-full max-w-[200px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.d ? <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
+                               <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspectDesktop || 16/9)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
                             </div>
-                            <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, 16/9)} className="bg-black text-white text-[9px] px-4 py-2 w-full uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50">Cambiar PC</button>
                           </div>
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Celular (9:16)</span>
-                            <div className="w-[100px] aspect-[9/16] bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Celular (Vertical)</span>
+                            <div style={{ aspectRatio: item.aspectMobile || 9/16 }} className="w-full max-w-[100px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.m ? <img src={getImgUrl(bannersData[item.id].m)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
+                               <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|m`, item.aspectMobile || 9/16)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
                             </div>
-                            <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|m`, 9/16)} className="bg-black text-white text-[9px] px-4 py-2 w-full uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50">Cambiar Móvil</button>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
-                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">Recorte forzado {item.aspect === 2/3 ? '2:3' : '9:16'}</span>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">
+                            Recorte forzado {item.aspect === 16/9 ? 'Horizontal (16:9)' : item.aspect === 9/16 ? 'Vertical (9:16)' : 'Vertical (2:3)'}
+                          </span>
                         </div>
                         <div className="flex items-center gap-4">
-                          <div className={`w-[45px] ${item.aspect === 2/3 ? 'aspect-[2/3]' : 'aspect-[9/16]'} bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden`}>
+                          <div style={{ aspectRatio: item.aspect || 1 }} className="w-[60px] bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
                              {bannersData[item.id]?.d && <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" />}
                           </div>
-                          <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspect || 1)} className="bg-black text-white text-[9px] px-4 py-3 uppercase tracking-widest hover:bg-gray-800 whitespace-nowrap disabled:opacity-50">Actualizar</button>
+                          <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspect || 1)} className="border border-black px-4 py-2 text-[8px] font-bold uppercase hover:bg-black hover:text-white transition-all disabled:opacity-50">Subir Foto</button>
                         </div>
                       </div>
                     )}
@@ -391,7 +408,7 @@ export default function AdminDashboard() {
                         <option value="Niño">Niño</option>
                       </select>
                       
-                      {/* 2. TIPO DE PRENDA (El que acabamos de agregar a la BD) */}
+                      {/* 2. TIPO DE PRENDA */}
                       <select value={tipo} onChange={e => setTipo(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Tipo de Prenda</option>
                         <option value="Jeans">Jeans</option>
@@ -404,7 +421,7 @@ export default function AdminDashboard() {
                         <option value="Sudadera">Sudadera</option>
                       </select>
 
-                      {/* 3. CORTE (El que ya tenías) */}
+                      {/* 3. CORTE */}
                       <select value={corte} onChange={e => setCorte(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Corte / Ajuste</option>
                         <optgroup label="Hombre">
@@ -431,7 +448,7 @@ export default function AdminDashboard() {
                   <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-4 block">Paso 3: Las 5 Fotos de Estudio (Recorte 2:3)</span>
                   <div className="grid grid-cols-5 gap-2 mt-4">
                       {fotosProducto.map((foto, index) => (
-                          <div key={index} onClick={() => iniciarCargaFoto(`prod_${index}`, 2/3)} className="aspect-[2/3] bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-100 overflow-hidden relative group">
+                          <div key={index} onClick={() => iniciarCargaFoto(`prod_${index}`, 2/3)} className="aspect-[2/3] bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer relative overflow-hidden group">
                               {foto ? (
                                 <><img src={foto} alt={`Foto ${index}`} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center"><span className="text-[8px] text-white font-bold uppercase">Cambiar</span></div></>
                               ) : (
