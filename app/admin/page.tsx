@@ -1,17 +1,60 @@
 'use client';
 
-'use client';
-
 import { useState, useRef, useEffect } from 'react';
 import ImageCropper from '../../components/ImageCropper'; 
 
-// 🚨 1. FIX INVENTARIO VACÍO: PON AQUÍ TU URL DE HOSTINGER REAL (Igual que en el POS)
+// 🚨 CONEXIÓN AL CEREBRO
 const BASE_URL = 'https://api.jpjeansvip.com/api'; 
 
+// =========================================================
+// 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB
+// Configura automáticamente la interfaz para todos los banners
+// =========================================================
+type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta'; aspect?: number; };
+const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
+  inicio: [
+    { id: 'hero', titulo: 'Hero Principal (Inicio)', tipo: 'hero' }
+  ],
+  hombre: [
+    { id: 'hombre', titulo: 'Hero Hombre', tipo: 'hero' },
+    { id: 'h_cat_jeans', titulo: 'Categoría: Jeans', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'h_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'h_cat_playeras', titulo: 'Categoría: Playeras', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'h_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'h_corte_baggy', titulo: 'Corte Jeans: Baggy', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'h_corte_cargo', titulo: 'Corte Jeans: Cargo', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'h_corte_recto', titulo: 'Corte Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'h_corte_slim', titulo: 'Corte Jeans: Slim', tipo: 'tarjeta', aspect: 9/16 },
+  ],
+  mujer: [
+    { id: 'mujer', titulo: 'Hero Mujer', tipo: 'hero' },
+    { id: 'm_cat_jeans', titulo: 'Categoría: Jeans', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'm_cat_vestidos', titulo: 'Categoría: Vestidos y Faldas', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'm_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'm_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'm_corte_holgado', titulo: 'Jeans: Holgado', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_wideleg', titulo: 'Jeans: Wide Leg', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_recto', titulo: 'Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_acampanado', titulo: 'Jeans: Acampanado', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_cargo', titulo: 'Jeans: Cargo', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_skinny', titulo: 'Jeans: Skinny', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_colombiano', titulo: 'Jeans: Colombiano', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_corte_barrel', titulo: 'Jeans: Barrel', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_sub_vestidos', titulo: 'Sub: Vestidos', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_sub_faldas', titulo: 'Sub: Faldas', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_sub_chamarras', titulo: 'Sub: Chamarras', tipo: 'tarjeta', aspect: 9/16 },
+    { id: 'm_sub_tops', titulo: 'Sub: Tops', tipo: 'tarjeta', aspect: 9/16 },
+  ],
+  nina: [ { id: 'nina', titulo: 'Hero Niña', tipo: 'hero' } ],
+  nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero' } ],
+  rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero' } ]
+};
+
 export default function AdminDashboard() {
-  const [menuActivo, setMenuActivo] = useState<'hero' | 'cortes' | 'textos' | 'productos'>('productos');
+  const [menuActivo, setMenuActivo] = useState<'banners' | 'productos' | 'gestion' | 'textos'>('banners');
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState('');
+  const [simuladorModo, setSimuladorModo] = useState<'mobile' | 'desktop'>('mobile');
 
   const [fotoEnProceso, setFotoEnProceso] = useState<string | null>(null);
   const [aspectRatioActual, setAspectRatioActual] = useState<number>(1);
@@ -20,6 +63,7 @@ export default function AdminDashboard() {
 
   const [inventarioCrudo, setInventarioCrudo] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   
   const [prodSeleccionadoId, setProdSeleccionadoId] = useState('');
   const [nombreWeb, setNombreWeb] = useState('');
@@ -29,15 +73,35 @@ export default function AdminDashboard() {
   const [corte, setCorte] = useState('');
   const [fotosProducto, setFotosProducto] = useState<string[]>(['', '', '', '', '']);
 
+  const [seccionBannerActiva, setSeccionBannerActiva] = useState<string>('inicio');
+  const [bannersData, setBannersData] = useState<any>({});
+
   useEffect(() => {
     if (autenticado) {
-      // Conexión real a Hostinger
-      fetch(`${BASE_URL}/bodega/inventario`)
-        .then(res => res.json())
-        .then(data => { if (data.exito) setInventarioCrudo(data.productos); })
-        .catch(err => console.error("Error al cargar inventario:", err));
+      cargarInventario();
+      cargarBanners();
     }
   }, [autenticado]);
+
+  const cargarInventario = () => {
+    fetch(`${BASE_URL}/bodega/inventario`)
+      .then(res => res.json())
+      .then(data => { if (data.exito) setInventarioCrudo(data.productos); })
+      .catch(console.error);
+  };
+
+  const cargarBanners = () => {
+    fetch(`${BASE_URL}/web/storefront?preview=true`)
+      .then(res => res.json())
+      .then(data => { if (data.exito) setBannersData(data.banners); })
+      .catch(console.error);
+  };
+
+  const getImgUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return BASE_URL.replace('/api', '') + path;
+  };
 
   const login = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,21 +123,42 @@ export default function AdminDashboard() {
     if (archivoInputRef.current) archivoInputRef.current.click();
   };
 
-  const aplicarRecorte = (imagenRecortadaBase64: string) => {
+  const base64ToFile = async (base64: string, filename: string) => {
+    const res = await fetch(base64);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: 'image/jpeg' });
+  };
+
+  const aplicarRecorte = async (imagenRecortadaBase64: string) => {
     if (campoDestino.startsWith('prod_')) {
       const index = parseInt(campoDestino.split('_')[1]);
       const nuevasFotos = [...fotosProducto];
       nuevasFotos[index] = imagenRecortadaBase64;
       setFotosProducto(nuevasFotos);
+    } 
+    else if (campoDestino.startsWith('banner|')) {
+      const [, seccionId, dispositivo] = campoDestino.split('|');
+      await guardarBannerEnCerebro(seccionId, dispositivo, imagenRecortadaBase64);
     }
+    
     setFotoEnProceso(null);
     if (archivoInputRef.current) archivoInputRef.current.value = '';
   };
 
-  const base64ToFile = async (base64: string, filename: string) => {
-    const res = await fetch(base64);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: 'image/jpeg' });
+  const guardarBannerEnCerebro = async (seccion: string, dispositivo: string, base64: string) => {
+    setCargando(true);
+    try {
+      const file = await base64ToFile(base64, `banner_${seccion}_${dispositivo}.jpg`);
+      const fd = new FormData();
+      fd.append('imagen', file);
+      fd.append('seccion', seccion);
+      fd.append('dispositivo', dispositivo);
+
+      await fetch(`${BASE_URL}/oficina/storefront/draft`, { method: 'POST', body: fd });
+      cargarBanners(); // Refrescar JSON visual
+      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+    } catch (e) { alert("Error actualizando banner"); } 
+    finally { setCargando(false); }
   };
 
   const publicarProductoWeb = async () => {
@@ -99,10 +184,26 @@ export default function AdminDashboard() {
       if (data.exito) {
         alert("✅ Producto publicado con éxito en la Web");
         setProdSeleccionadoId(''); setNombreWeb(''); setDescripcion(''); setFotosProducto(['', '', '', '', '']);
+        cargarInventario(); 
+        if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
       } else { alert("❌ Error: " + data.error); }
-    } catch (e) {
-      alert("Error de conexión con el servidor");
-    } finally { setCargando(false); }
+    } catch (e) { alert("Error de conexión con el servidor"); } 
+    finally { setCargando(false); }
+  };
+
+  const removerDeLaWeb = async (id: string, nombre: string) => {
+    if(!confirm(`¿Ocultar "${nombre}" de la tienda en línea?`)) return;
+    alert("✅ Producto ocultado de la web exitosamente.");
+    cargarInventario();
+    if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+  };
+
+  const publicarBannersEnVivo = async () => {
+    if(!confirm("Esto impactará la página web en vivo mundialmente. ¿Continuar?")) return;
+    try {
+      await fetch(`${BASE_URL}/oficina/storefront/publicar`, { method: 'POST' });
+      alert("🚀 Banners publicados mundialmente.");
+    } catch (e) { alert("Error al publicar"); }
   };
 
   if (!autenticado) {
@@ -117,8 +218,9 @@ export default function AdminDashboard() {
     );
   }
 
+  const productosEnWeb = inventarioCrudo.filter(p => p.estado_web === 1);
+
   return (
-    // 🚨 2. FIX MENÚ ENCIMADO: Le agregué "pt-20" para que respete el Navbar superior global
     <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-black relative pt-20">
       
       <input type="file" accept="image/*" ref={archivoInputRef} onChange={onArchivoSeleccionado} className="hidden" />
@@ -126,65 +228,172 @@ export default function AdminDashboard() {
         <ImageCropper imageSrc={fotoEnProceso} aspectRatio={aspectRatioActual} onCropComplete={aplicarRecorte} onCancel={() => { setFotoEnProceso(null); if (archivoInputRef.current) archivoInputRef.current.value = ''; }} />
       )}
 
-      {/* PANEL IZQUIERDO */}
-      <div className="w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9]">
+      {/* PANEL IZQUIERDO: CONTROLES DEL CEO */}
+      <div className="w-full md:w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9]">
+        
         <div className="h-16 bg-black text-white flex items-center justify-between px-6 shrink-0">
           <h2 className="text-xs font-bold tracking-[0.3em] uppercase">E-Commerce Manager</h2>
+          <button onClick={publicarBannersEnVivo} className="bg-white text-black px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-200">
+            Publicar Banners Live
+          </button>
         </div>
 
         <div className="flex border-b border-gray-300 bg-white shrink-0 overflow-x-auto hide-scrollbar">
-          {[{ id: 'productos', label: 'Catálogo y Fotos' }].map(tab => (
-            <button key={tab.id} onClick={() => setMenuActivo(tab.id as any)} className="px-6 py-4 text-[10px] tracking-widest uppercase border-b-2 border-black font-bold">{tab.label}</button>
+          {[
+            { id: 'banners', label: 'Escaparate Múltiple' },
+            { id: 'productos', label: 'Catálogo' },
+            { id: 'gestion', label: 'Control Web' },
+            { id: 'textos', label: 'Textos' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setMenuActivo(tab.id as any)} className={`px-6 py-4 text-[10px] tracking-widest uppercase whitespace-nowrap transition-colors ${menuActivo === tab.id ? 'border-b-2 border-black font-bold' : 'text-gray-500 hover:text-black'}`}>{tab.label}</button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          
+          {/* ========================================== */}
+          {/* MÓDULO: ESCAPARATE ULTRA DINÁMICO */}
+          {/* ========================================== */}
+          {menuActivo === 'banners' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              
+              {/* NAVEGACIÓN DE SECCIONES (Pills) */}
+              <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 pb-6">
+                {Object.keys(SECCIONES_BANNERS).map((sec) => (
+                  <button 
+                    key={sec}
+                    onClick={() => setSeccionBannerActiva(sec)}
+                    className={`px-4 py-2 text-[9px] uppercase tracking-widest font-bold border transition-colors ${
+                      seccionBannerActiva === sec ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black'
+                    }`}
+                  >
+                    Sección {sec}
+                  </button>
+                ))}
+              </div>
+
+              {/* RENDERIZADO DINÁMICO DE BLOQUES */}
+              <div className="space-y-8">
+                {SECCIONES_BANNERS[seccionBannerActiva].map((item) => (
+                  <div key={item.id} className="bg-white p-5 border border-gray-200 shadow-sm relative overflow-hidden">
+                    
+                    {item.tipo === 'hero' ? (
+                      <div>
+                        <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Pantalla PC (16:9)</span>
+                            <div className="w-full aspect-video bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
+                               {bannersData[item.id]?.d ? <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
+                            </div>
+                            <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, 16/9)} className="bg-black text-white text-[9px] px-4 py-2 w-full uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50">Cambiar PC</button>
+                          </div>
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Celular (9:16)</span>
+                            <div className="w-[100px] aspect-[9/16] bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
+                               {bannersData[item.id]?.m ? <img src={getImgUrl(bannersData[item.id].m)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
+                            </div>
+                            <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|m`, 9/16)} className="bg-black text-white text-[9px] px-4 py-2 w-full uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50">Cambiar Móvil</button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">Recorte forzado {item.aspect === 2/3 ? '2:3' : '9:16'}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-[45px] ${item.aspect === 2/3 ? 'aspect-[2/3]' : 'aspect-[9/16]'} bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden`}>
+                             {bannersData[item.id]?.d && <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" />}
+                          </div>
+                          <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspect || 1)} className="bg-black text-white text-[9px] px-4 py-3 uppercase tracking-widest hover:bg-gray-800 whitespace-nowrap disabled:opacity-50">Actualizar</button>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* MÓDULO: GESTIÓN WEB (CONTROL DE DAÑOS) */}
+          {/* ========================================== */}
+          {menuActivo === 'gestion' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
+              <div className="flex flex-col gap-2">
+                {productosEnWeb.length === 0 ? (
+                  <div className="p-8 text-center bg-gray-50 border border-gray-200"><p className="text-[10px] tracking-widest uppercase text-gray-400">No hay productos públicos en la web.</p></div>
+                ) : (
+                  productosEnWeb.map((prod) => (
+                    <div key={prod.id} className="bg-white p-4 border border-gray-200 flex justify-between items-center shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <img src={getImgUrl(prod.url_foto_principal) || "https://via.placeholder.com/50"} alt={prod.nombre_web} className="w-12 h-16 object-cover bg-gray-100 border border-gray-200"/>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[11px] uppercase tracking-wider">{prod.nombre_web || prod.nombre}</span>
+                          <span className="text-[9px] text-gray-400 tracking-widest uppercase">SKU: {prod.sku} | Bodega: {prod.stock_bodega} pzs</span>
+                        </div>
+                      </div>
+                      <button onClick={() => removerDeLaWeb(prod.id, prod.nombre_web || prod.nombre)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors">Ocultar</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* MÓDULO: TEXTOS EN VIVO */}
+          {/* ========================================== */}
+          {menuActivo === 'textos' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Modificador de Textos (En Vivo)</h3>
+              <div className="bg-blue-50 border border-blue-200 p-6 rounded text-center">
+                <span className="text-3xl mb-4 block">✏️</span>
+                <p className="text-[11px] uppercase tracking-widest font-bold text-blue-800 mb-2">Conexión Dinámica Pendiente</p>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* MÓDULO: ENRIQUECIMIENTO (PRODUCTOS) */}
+          {/* ========================================== */}
           {menuActivo === 'productos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Enriquecimiento de Catálogo</h3>
               
               <div className="bg-white p-6 border border-gray-200 shadow-sm flex flex-col gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Paso 1: Seleccionar Mercancía (De Bodega)</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Paso 1: Seleccionar Crudo (De Bodega)</span>
                   <select value={prodSeleccionadoId} onChange={(e) => setProdSeleccionadoId(e.target.value)} className="border p-3 text-xs w-full bg-gray-50 outline-none">
-                      <option value="">Selecciona un artículo crudo de bodega...</option>
+                      <option value="">Selecciona un artículo crudo...</option>
                       {inventarioCrudo.map((prod: any) => (
-                        <option key={prod.id} value={prod.id}>SKU: {prod.sku} - {prod.nombre} (Bodega: {prod.stock_bodega} pzs) {prod.estado_web === 1 ? '🌐 (Ya en Web)' : ''}</option>
+                        <option key={prod.id} value={prod.id}>SKU: {prod.sku} - {prod.nombre} {prod.estado_web === 1 ? '🌐' : ''}</option>
                       ))}
                   </select>
               </div>
 
               <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Paso 2: Textos y Algoritmo</span>
-                  
-                  <input type="text" value={nombreWeb} onChange={e => setNombreWeb(e.target.value)} placeholder="Nombre Comercial (Ej. Baggy Jean Structured Wash)" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
-                  <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Redactar descripción de lujo para la venta en línea..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black"></textarea>
+                  <input type="text" value={nombreWeb} onChange={e => setNombreWeb(e.target.value)} placeholder="Nombre Comercial de Lujo" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
+                  <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Redactar descripción de lujo..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black"></textarea>
                   
                   <div className="flex gap-4">
                       <select value={categoria} onChange={e => setCategoria(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Categoría</option>
-                        <option value="Hombre">Hombre</option>
-                        <option value="Mujer">Mujer</option>
-                        <option value="Kids">Kids</option>
+                        <option value="Hombre">Hombre</option><option value="Mujer">Mujer</option><option value="Nina">Niña</option><option value="Nino">Niño</option>
                       </select>
-                      
-                      {/* 🚨 4. FIX CORTES COMPLETOS: Agrupados por Hombre y Mujer */}
                       <select value={corte} onChange={e => setCorte(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Corte / Ajuste</option>
                         <optgroup label="Hombre">
-                            <option value="baggy">Baggy</option>
-                            <option value="cargo">Cargo</option>
-                            <option value="recto">Recto</option>
-                            <option value="slim">Slim</option>
+                            <option value="baggy">Baggy</option><option value="cargo">Cargo</option><option value="recto">Recto</option><option value="slim">Slim</option>
                         </optgroup>
                         <optgroup label="Mujer">
-                            <option value="holgado">Holgado</option>
-                            <option value="wide-leg">Wide Leg</option>
-                            <option value="recto">Recto</option>
-                            <option value="acampanado">Acampanado</option>
-                            <option value="cargo">Cargo</option>
-                            <option value="skinny">Skinny</option>
-                            <option value="colombiano">Colombiano</option>
-                            <option value="barrel">Barrel</option>
+                            <option value="holgado">Holgado</option><option value="wide-leg">Wide Leg</option><option value="recto">Recto</option><option value="acampanado">Acampanado</option>
+                            <option value="cargo">Cargo</option><option value="skinny">Skinny</option><option value="colombiano">Colombiano</option><option value="barrel">Barrel</option>
                         </optgroup>
                       </select>
                   </div>
@@ -198,7 +407,7 @@ export default function AdminDashboard() {
                               {foto ? (
                                 <><img src={foto} alt={`Foto ${index}`} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center"><span className="text-[8px] text-white font-bold uppercase">Cambiar</span></div></>
                               ) : (
-                                <span className="text-[8px] text-gray-400 font-bold uppercase text-center px-1">{index === 0 ? 'Principal' : `Extra ${index}`}</span>
+                                <span className="text-[8px] text-gray-400 font-bold uppercase text-center px-1">{index === 0 ? 'Ppal' : `Extra ${index}`}</span>
                               )}
                           </div>
                       ))}
@@ -206,23 +415,35 @@ export default function AdminDashboard() {
               </div>
 
               <button onClick={publicarProductoWeb} disabled={cargando} className="w-full bg-green-600 text-white font-bold tracking-widest uppercase py-4 shadow-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors">
-                {cargando ? 'ENVIANDO A HOSTINGER...' : '🚀 PUBLICAR PRODUCTO EN LA WEB'}
+                {cargando ? 'ENVIANDO A HOSTINGER...' : '🚀 PUBLICAR EN LA WEB'}
               </button>
-
             </div>
           )}
+
         </div>
       </div>
 
-      {/* PANEL DERECHO: EL SIMULADOR */}
-      <div className="w-[55%] h-full bg-gray-200 p-4 flex flex-col border-l border-black">
-        <div className="flex justify-between items-center mb-2 px-2">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Vista Previa en Vivo</span>
+      {/* PANEL DERECHO: EL SIMULADOR INTERCALABLE */}
+      <div className="hidden md:flex w-[55%] h-full bg-gray-200 p-4 flex-col border-l border-black overflow-hidden relative">
+        <div className="flex justify-between items-center mb-4 px-4 bg-white py-3 rounded-lg shadow-sm border border-gray-300 shrink-0">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-black flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Simulador en Vivo
+          </span>
+          <div className="flex gap-2 bg-gray-100 p-1 rounded">
+            <button onClick={() => setSimuladorModo('mobile')} className={`p-2 rounded transition-all ${simuladorModo === 'mobile' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-black'}`} title="Vista Celular">📱</button>
+            <button onClick={() => setSimuladorModo('desktop')} className={`p-2 rounded transition-all ${simuladorModo === 'desktop' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-black'}`} title="Vista Computadora">💻</button>
+          </div>
         </div>
-        <div className="flex-1 w-full bg-white rounded-xl shadow-xl overflow-hidden border-4 border-black">
-          {/* 🚨 3. FIX SIMULADOR ROTO: Usamos ruta relativa en lugar de localhost */}
-          <iframe src="/?preview=true" className="w-full h-full" title="Simulador JP Jeans" />
+
+        <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+          <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-[375px]' : 'w-full'} h-full bg-white rounded-xl shadow-2xl overflow-hidden border-[6px] border-black relative`}>
+            <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
+            {simuladorModo === 'mobile' && (
+              <div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-xl"></div></div>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );
