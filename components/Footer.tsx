@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
-// 10 imágenes en formato horizontal (paisaje) para el carrusel del Footer
-const footerImages = [
+const BASE_URL = 'https://api.jpjeansvip.com/api';
+
+// ==============================================================================
+// 🧠 IMÁGENES DE RESPALDO (Por si apenas está cargando el servidor)
+// ==============================================================================
+const defaultFooterImages = [
   'https://images.unsplash.com/photo-1618886487325-f82764b6ba37?q=80&w=1600&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=1600&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1600&auto=format&fit=crop',
@@ -19,8 +23,39 @@ const footerImages = [
 ];
 
 export default function Footer() {
-  const [images, setImages] = useState(footerImages);
+  const [images, setImages] = useState(defaultFooterImages);
 
+  // ==============================================================================
+  // ⚡ CONEXIÓN AL CEREBRO (Sincronización en vivo con el panel Admin)
+  // ==============================================================================
+  useEffect(() => {
+    const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
+    
+    fetch(`${BASE_URL}/web/storefront${isPreview ? '?preview=true' : ''}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito && data.banners) {
+          const b = data.banners;
+          const getImg = (path: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : '';
+          
+          // Extraemos las imágenes que haya subido el Jefe desde el Admin
+          const dynamicImages = [
+            getImg(b.footer_slide_1?.d),
+            getImg(b.footer_slide_2?.d),
+            getImg(b.footer_slide_3?.d),
+            getImg(b.footer_slide_4?.d)
+          ].filter(Boolean); // Esto limpia los espacios vacíos si subió menos de 4
+
+          if (dynamicImages.length > 0) {
+            // Repetimos el arreglo varias veces para garantizar que el carrusel infinito nunca se quede sin fotos para rotar
+            setImages([...dynamicImages, ...dynamicImages, ...dynamicImages]);
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  // Animación del Carrusel (Intacta)
   useEffect(() => {
     const timer = setInterval(() => {
       setImages((prev) => [...prev.slice(1), prev[0]]);
@@ -31,6 +66,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white pt-16 pb-12 border-t border-white/10 w-full overflow-hidden">
       
+      {/* EL CARRUSEL CONECTADO AL ESTADO DINÁMICO */}
       <div className="w-full h-[30vh] md:h-[60vh] relative flex items-center justify-center overflow-hidden mb-16 md:mb-24">
         <AnimatePresence mode="popLayout">
           {images.slice(0, 3).map((img, i) => {
@@ -42,7 +78,7 @@ export default function Footer() {
                 
             return (
               <motion.div
-                key={img}
+                key={img + i} // Le sumamos el índice por si se repite la foto
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: i === 1 ? 1 : 0.4 }}

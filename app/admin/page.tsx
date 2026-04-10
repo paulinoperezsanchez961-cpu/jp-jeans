@@ -12,16 +12,25 @@ const BASE_URL = 'https://api.jpjeansvip.com/api';
 type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
 const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   inicio: [
-    // 🚨 EL CARRUSEL VERTICAL DEL INICIO (9:16)
-    { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
-    { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
-    { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 9/16, aspectMobile: 9/16 },
-    // 🚨 SECCIONES DE NOVEDADES Y OFERTAS DE LA PORTADA
-    { id: 'home_mujer', titulo: 'Novedades: MUJER', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'home_hombre', titulo: 'Novedades: HOMBRE', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'home_nina', titulo: 'Novedades: NIÑA', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'home_nino', titulo: 'Novedades: NIÑO', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'home_rebajas', titulo: 'Ofertas: REBAJAS', tipo: 'tarjeta', aspect: 2/3 },
+    // 1. EL HERO PRINCIPAL (Las 3 imágenes hasta arriba de la página)
+    { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    
+    // 2. EL CARRUSEL VERTICAL CENTRAL (A mitad del page.tsx)
+    { id: 'c_vert_1', titulo: 'Carrusel Central - Foto 1', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'c_vert_2', titulo: 'Carrusel Central - Foto 2', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'c_vert_3', titulo: 'Carrusel Central - Foto 3', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'c_vert_4', titulo: 'Carrusel Central - Foto 4', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'c_vert_5', titulo: 'Carrusel Central - Foto 5', tipo: 'tarjeta', aspect: 2/3 },
+    { id: 'c_vert_6', titulo: 'Carrusel Central - Foto 6', tipo: 'tarjeta', aspect: 2/3 },
+
+    // 3. SECCIONES DE ACCESO RÁPIDO EN PORTADA (Novedades y Ofertas)
+    { id: 'home_mujer', titulo: 'Sección Portada: MUJER', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'home_hombre', titulo: 'Sección Portada: HOMBRE', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'home_nina', titulo: 'Sección Portada: NIÑA', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'home_nino', titulo: 'Sección Portada: NIÑO', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    { id: 'home_rebajas', titulo: 'Sección Portada: REBAJAS', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
   ],
   hombre: [
     { id: 'hombre', titulo: 'Hero Hombre', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },

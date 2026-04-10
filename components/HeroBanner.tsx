@@ -4,8 +4,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
-// Usamos dos encuadres de la misma foto: Panorámica para PC, Retrato para Móvil
-const slides = [
+const BASE_URL = 'https://api.jpjeansvip.com/api';
+
+// ==============================================================================
+// 🧠 RED DE SEGURIDAD (Fallbacks)
+// Garantiza que la web NUNCA se vea vacía o negra mientras el servidor responde
+// o si el administrador olvidó subir alguna de las 3 diapositivas.
+// ==============================================================================
+const defaultSlides = [
   { 
     id: 1, 
     imgDesktop: 'https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=2500&auto=format&fit=crop',
@@ -18,18 +24,58 @@ const slides = [
   },
   { 
     id: 3, 
-    imgDesktop: 'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=2500&auto=format&fit=crop',
-    imgMobile: 'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=1000&h=1400&auto=format&fit=crop'
+    imgDesktop: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2500&auto=format&fit=crop',
+    imgMobile: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000&h=1400&auto=format&fit=crop'
   }
 ];
 
 export default function HeroBanner() {
+  // Inicializamos con la red de seguridad para que la carga sea instantánea
+  const [slides, setSlides] = useState<any[]>(defaultSlides);
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1)), 5000);
-    return () => clearInterval(timer);
+    // 🧠 DETECTOR MÁGICO: ¿Estamos en el simulador del Admin o en la web real?
+    const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
+    
+    fetch(`${BASE_URL}/web/storefront${isPreview ? '?preview=true' : ''}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito && data.banners) {
+          const b = data.banners;
+          
+          // Lógica inteligente: Si hay foto del backend la usa, si no, mantiene la de seguridad
+          const getImg = (path: string, fallback: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
+          
+          setSlides([
+            { 
+              id: 1, 
+              imgDesktop: getImg(b.hero_1?.d, defaultSlides[0].imgDesktop), 
+              imgMobile: getImg(b.hero_1?.m, defaultSlides[0].imgMobile) 
+            },
+            { 
+              id: 2, 
+              imgDesktop: getImg(b.hero_2?.d, defaultSlides[1].imgDesktop), 
+              imgMobile: getImg(b.hero_2?.m, defaultSlides[1].imgMobile) 
+            },
+            { 
+              id: 3, 
+              imgDesktop: getImg(b.hero_3?.d, defaultSlides[2].imgDesktop), 
+              imgMobile: getImg(b.hero_3?.m, defaultSlides[2].imgMobile) 
+            }
+          ]);
+        }
+      })
+      .catch(console.error);
   }, []);
+
+  // Rótalo cada 5 segundos
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
   return (
     // En celular ocupará el 85% de la pantalla (h-[85vh]) para dar formato retrato imponente

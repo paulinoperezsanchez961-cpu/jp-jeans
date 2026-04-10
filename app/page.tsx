@@ -5,22 +5,14 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link';
 import HeroBanner from "@/components/HeroBanner";
 import Footer from "@/components/Footer";
-// Importamos el botón de registro de Clerk para el popup
 import { SignUpButton } from "@clerk/nextjs";
 
-// ==============================================================================
-// 📝 GUÍA PARA CAMBIAR LAS IMÁGENES (BANNERS) DE MANERA SENCILLA
-// ==============================================================================
-// Para cambiar una imagen, solo reemplaza el enlace (URL) que está entre las comillas simples.
-// 
-// 'd': Significa "Desktop" (Computadora). Usa imágenes horizontales o panorámicas.
-// 'm': Significa "Mobile" (Celular). Usa imágenes verticales para que cubran toda la pantalla.
-// 
-// Tip Pro: Si subes tus propias imágenes, asegúrate de que pesen menos de 500kb 
-// para que la página siga cargando a la velocidad de la luz.
-// ==============================================================================
+const BASE_URL = 'https://api.jpjeansvip.com/api';
 
-const imgs = {
+// ==============================================================================
+// 🧠 IMÁGENES DE RESPALDO (Fallbacks por si apenas está cargando el servidor)
+// ==============================================================================
+const defaultImgs = {
   hombre: {
     d: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1600&auto=format&fit=crop',
     m: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1000&h=1400&auto=format&fit=crop'
@@ -43,17 +35,56 @@ const imgs = {
   }
 };
 
-const imagenesCarrusel = [
+const defaultCarrusel = [
   'https://images.unsplash.com/photo-1550614000-4b95dd2475ec?q=80&w=1200', 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200',
   'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200', 'https://images.unsplash.com/photo-1583316174775-bd6dc0e9f298?q=80&w=1200',
   'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=1200', 'https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=1200'
 ];
 
 export default function Home() {
-  const [images, setImages] = useState(imagenesCarrusel);
-  
-  // ESTADO PARA EL POPUP DE DESCUENTO
+  // ==============================================================================
+  // ⚡ ESTADOS DINÁMICOS CONECTADOS AL CEREBRO
+  // ==============================================================================
+  const [imgs, setImgs] = useState(defaultImgs);
+  const [images, setImages] = useState(defaultCarrusel);
   const [showPromo, setShowPromo] = useState(false);
+
+  // ==============================================================================
+  // 🧠 CONEXIÓN A HOSTINGER (Se ejecuta al entrar a la página)
+  // ==============================================================================
+  useEffect(() => {
+    // Detectamos si el Jefe está viendo la página desde el Admin
+    const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
+    
+    fetch(`${BASE_URL}/web/storefront${isPreview ? '?preview=true' : ''}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito && data.banners) {
+          const b = data.banners;
+          // Función para convertir la ruta de tu servidor en URL completa
+          const getImg = (path: string, fallback: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
+          
+          setImgs(prev => ({
+            hombre: { d: getImg(b.home_hombre?.d, prev.hombre.d), m: getImg(b.home_hombre?.m, prev.hombre.m) },
+            mujer: { d: getImg(b.home_mujer?.d, prev.mujer.d), m: getImg(b.home_mujer?.m, prev.mujer.m) },
+            nina: { d: getImg(b.home_nina?.d, prev.nina.d), m: getImg(b.home_nina?.m, prev.nina.m) },
+            nino: { d: getImg(b.home_nino?.d, prev.nino.d), m: getImg(b.home_nino?.m, prev.nino.m) },
+            rebajas: { d: getImg(b.home_rebajas?.d, prev.rebajas.d), m: getImg(b.home_rebajas?.m, prev.rebajas.m) }
+          }));
+
+          // Verificamos si en el Admin configuraste imágenes para el carrusel vertical
+          const arrDinamico = [
+            getImg(b.c_vert_1?.d, ''), getImg(b.c_vert_2?.d, ''), getImg(b.c_vert_3?.d, ''),
+            getImg(b.c_vert_4?.d, ''), getImg(b.c_vert_5?.d, ''), getImg(b.c_vert_6?.d, '')
+          ].filter(Boolean);
+
+          if (arrDinamico.length > 0) {
+            setImages(arrDinamico);
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Parallax Configurado: De arriba hacia abajo hasta descansar en la esquina
   const refNovedades = useRef(null);
@@ -65,12 +96,12 @@ export default function Home() {
   const yKids = useTransform(scrollKids, [0, 1], ["-50vh", "0vh"]);
 
   useEffect(() => {
-    // Temporizador del carrusel
+    // Temporizador del carrusel (Intacto)
     const timer = setInterval(() => {
       setImages((prev) => [...prev.slice(1), prev[0]]);
     }, 3000);
     
-    // LÓGICA DEL POPUP: Mostrar después de 3 segundos si no lo ha cerrado antes
+    // LÓGICA DEL POPUP: Mostrar después de 3 segundos si no lo ha cerrado antes (Intacto)
     const hasSeenPromo = localStorage.getItem('jpjeans_promo_cerrada');
     if (!hasSeenPromo) {
       const promoTimer = setTimeout(() => setShowPromo(true), 3000);
@@ -83,7 +114,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Función para cerrar el popup y no molestar más
+  // Función para cerrar el popup y no molestar más (Intacto)
   const cerrarPromo = () => {
     setShowPromo(false);
     localStorage.setItem('jpjeans_promo_cerrada', 'true');
