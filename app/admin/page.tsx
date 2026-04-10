@@ -382,18 +382,46 @@ export default function AdminDashboard() {
                   <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Redactar descripción de lujo..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black"></textarea>
                   
                   <div className="flex gap-4">
+                      {/* 1. CATEGORÍA (Género) */}
                       <select value={categoria} onChange={e => setCategoria(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Categoría</option>
-                        <option value="Hombre">Hombre</option><option value="Mujer">Mujer</option><option value="Nina">Niña</option><option value="Nino">Niño</option>
+                        <option value="Hombre">Hombre</option>
+                        <option value="Mujer">Mujer</option>
+                        <option value="Niña">Niña</option>
+                        <option value="Niño">Niño</option>
                       </select>
+                      
+                      {/* 2. TIPO DE PRENDA (El que acabamos de agregar a la BD) */}
+                      <select value={tipo} onChange={e => setTipo(e.target.value)} className="border p-3 text-xs w-full outline-none">
+                        <option value="">Tipo de Prenda</option>
+                        <option value="Jeans">Jeans</option>
+                        <option value="Chamarra">Chamarra</option>
+                        <option value="Playera">Playera</option>
+                        <option value="Accesorio">Accesorio</option>
+                        <option value="Vestido">Vestido</option>
+                        <option value="Falda">Falda</option>
+                        <option value="Top">Top</option>
+                        <option value="Sudadera">Sudadera</option>
+                      </select>
+
+                      {/* 3. CORTE (El que ya tenías) */}
                       <select value={corte} onChange={e => setCorte(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Corte / Ajuste</option>
                         <optgroup label="Hombre">
-                            <option value="baggy">Baggy</option><option value="cargo">Cargo</option><option value="recto">Recto</option><option value="slim">Slim</option>
+                            <option value="baggy">Baggy</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="recto">Recto</option>
+                            <option value="slim">Slim</option>
                         </optgroup>
                         <optgroup label="Mujer">
-                            <option value="holgado">Holgado</option><option value="wide-leg">Wide Leg</option><option value="recto">Recto</option><option value="acampanado">Acampanado</option>
-                            <option value="cargo">Cargo</option><option value="skinny">Skinny</option><option value="colombiano">Colombiano</option><option value="barrel">Barrel</option>
+                            <option value="holgado">Holgado</option>
+                            <option value="wide-leg">Wide Leg</option>
+                            <option value="recto">Recto</option>
+                            <option value="acampanado">Acampanado</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="skinny">Skinny</option>
+                            <option value="colombiano">Colombiano</option>
+                            <option value="barrel">Barrel</option>
                         </optgroup>
                       </select>
                   </div>
