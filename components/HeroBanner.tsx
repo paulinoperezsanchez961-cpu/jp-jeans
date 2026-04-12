@@ -30,7 +30,6 @@ const defaultSlides = [
 ];
 
 export default function HeroBanner() {
-  // Inicializamos con la red de seguridad para que la carga sea instantánea
   const [slides, setSlides] = useState<any[]>(defaultSlides);
   const [current, setCurrent] = useState(0);
 
@@ -44,8 +43,9 @@ export default function HeroBanner() {
         if (data.exito && data.banners) {
           const b = data.banners;
           
-          // Lógica inteligente: Si hay foto del backend la usa, si no, mantiene la de seguridad
-          const getImg = (path: string, fallback: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
+          // Lógica inteligente: Si hay foto del backend y no está vacía la usa, si no, mantiene la de seguridad
+          const getImg = (path: string | undefined, fallback: string) => 
+            (path && path.trim() !== '') ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
           
           setSlides([
             { 
@@ -69,7 +69,7 @@ export default function HeroBanner() {
       .catch(console.error);
   }, []);
 
-  // Rótalo cada 5 segundos
+  // Rota cada 5 segundos
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -78,7 +78,7 @@ export default function HeroBanner() {
   }, [slides.length]);
 
   return (
-    // En celular ocupará el 85% de la pantalla (h-[85vh]) para dar formato retrato imponente
+    // En celular ocupará el 85% de la pantalla (h-[85vh]) para dar un formato retrato imponente
     <div className="w-full relative h-[85vh] md:h-screen bg-black overflow-hidden">
       
       <AnimatePresence mode="wait">

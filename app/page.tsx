@@ -62,7 +62,7 @@ export default function Home() {
         if (data.exito && data.banners) {
           const b = data.banners;
           // Función para convertir la ruta de tu servidor en URL completa
-          const getImg = (path: string, fallback: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
+          const getImg = (path: string | undefined, fallback: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
           
           setImgs(prev => ({
             hombre: { d: getImg(b.home_hombre?.d, prev.hombre.d), m: getImg(b.home_hombre?.m, prev.hombre.m) },
@@ -72,15 +72,20 @@ export default function Home() {
             rebajas: { d: getImg(b.home_rebajas?.d, prev.rebajas.d), m: getImg(b.home_rebajas?.m, prev.rebajas.m) }
           }));
 
-          // Verificamos si en el Admin configuraste imágenes para el carrusel vertical
-          const arrDinamico = [
-            getImg(b.c_vert_1?.d, ''), getImg(b.c_vert_2?.d, ''), getImg(b.c_vert_3?.d, ''),
-            getImg(b.c_vert_4?.d, ''), getImg(b.c_vert_5?.d, ''), getImg(b.c_vert_6?.d, '')
-          ].filter(Boolean);
-
-          if (arrDinamico.length > 0) {
-            setImages(arrDinamico);
+          // 🚨 LECTURA INTELIGENTE DE LA LISTA DINÁMICA DEL CARRUSEL VERTICAL
+          let carruselDinamico: string[] = [];
+          if (Array.isArray(b.c_vert_list) && b.c_vert_list.length > 0) {
+            carruselDinamico = b.c_vert_list.map((img: any) => getImg(img?.d, '')).filter(Boolean) as string[];
           }
+          
+          let finalImages = carruselDinamico.length > 0 ? carruselDinamico : defaultCarrusel;
+          
+          // Si el admin puso menos de 3 fotos, las clonamos matemáticamente 
+          // para que el efecto infinito de Framer Motion no se rompa ni deje huecos
+          if (finalImages.length > 0 && finalImages.length < 3) {
+            finalImages = [...finalImages, ...finalImages, ...finalImages];
+          }
+          setImages(finalImages);
         }
       })
       .catch(console.error);
@@ -96,12 +101,12 @@ export default function Home() {
   const yKids = useTransform(scrollKids, [0, 1], ["-50vh", "0vh"]);
 
   useEffect(() => {
-    // Temporizador del carrusel (Intacto)
+    // Temporizador del carrusel
     const timer = setInterval(() => {
       setImages((prev) => [...prev.slice(1), prev[0]]);
     }, 3000);
     
-    // LÓGICA DEL POPUP: Mostrar después de 3 segundos si no lo ha cerrado antes (Intacto)
+    // LÓGICA DEL POPUP: Mostrar después de 3 segundos si no lo ha cerrado antes
     const hasSeenPromo = localStorage.getItem('jpjeans_promo_cerrada');
     if (!hasSeenPromo) {
       const promoTimer = setTimeout(() => setShowPromo(true), 3000);
@@ -114,7 +119,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Función para cerrar el popup y no molestar más (Intacto)
+  // Función para cerrar el popup y no molestar más
   const cerrarPromo = () => {
     setShowPromo(false);
     localStorage.setItem('jpjeans_promo_cerrada', 'true');
@@ -198,7 +203,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. CARRUSEL */}
+      {/* 3. CARRUSEL VERTICAL CENTRAL */}
       <section className="w-full h-[70vh] md:h-screen bg-black flex flex-col justify-center border-b border-white/10 relative overflow-hidden">
         <div className="w-full h-full relative flex items-center justify-center">
           <AnimatePresence mode="popLayout">
@@ -206,7 +211,7 @@ export default function Home() {
               let positionClass = i === 0 ? "left-0 -translate-x-1/2 md:-translate-x-1/3" : i === 1 ? "left-1/2 -translate-x-1/2 shadow-[0_0_50px_rgba(255,255,255,0.1)]" : "right-0 translate-x-1/2 md:translate-x-1/3";
               return (
                 <motion.div
-                  key={img}
+                  key={img + i}
                   layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: i === 1 ? 1 : 0.4 }}

@@ -143,7 +143,7 @@ export default function RebajasPage() {
                 <div key={prod.id} className="group bg-white flex flex-col relative">
                   
                   {/* IMAGEN (Aspecto 2/3) */}
-                  <div className="relative w-full aspect-[2/3] bg-[#f9f9f9] overflow-hidden">
+                  <div className="relative w-full aspect-2/3 bg-[#f9f9f9] overflow-hidden">
                     
                     {/* VISTA MÓVIL: Swiper táctil con bolitas negras */}
                     <div className="md:hidden w-full h-full">

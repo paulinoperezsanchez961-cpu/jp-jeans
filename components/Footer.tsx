@@ -26,7 +26,7 @@ export default function Footer() {
   const [images, setImages] = useState(defaultFooterImages);
 
   // ==============================================================================
-  // ⚡ CONEXIÓN AL CEREBRO (Sincronización en vivo con el panel Admin)
+  // ⚡ CONEXIÓN AL CEREBRO (Sincronización de Listas Dinámicas)
   // ==============================================================================
   useEffect(() => {
     const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
@@ -36,19 +36,24 @@ export default function Footer() {
       .then(data => {
         if (data.exito && data.banners) {
           const b = data.banners;
-          const getImg = (path: string) => path ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : '';
           
-          // Extraemos las imágenes que haya subido el Jefe desde el Admin
-          const dynamicImages = [
-            getImg(b.footer_slide_1?.d),
-            getImg(b.footer_slide_2?.d),
-            getImg(b.footer_slide_3?.d),
-            getImg(b.footer_slide_4?.d)
-          ].filter(Boolean); // Esto limpia los espacios vacíos si subió menos de 4
+          // Lógica de seguridad: Extraer solo rutas válidas y descartar vacíos o nulos
+          const getImg = (path: string | undefined) => 
+            (path && path.trim() !== '') ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : null;
+          
+          // 🚨 LECTURA INTELIGENTE DE LA LISTA DINÁMICA DEL FOOTER
+          const dynamicImages = Array.isArray(b.footer_list) 
+            ? b.footer_list.map((img: any) => getImg(img.d)).filter(Boolean) as string[]
+            : [];
 
           if (dynamicImages.length > 0) {
-            // Repetimos el arreglo varias veces para garantizar que el carrusel infinito nunca se quede sin fotos para rotar
-            setImages([...dynamicImages, ...dynamicImages, ...dynamicImages]);
+            let finalFooter = [...dynamicImages];
+            // Clonamos los elementos hasta tener al menos 4 para garantizar que 
+            // el carrusel siempre ruede suavemente sin mostrar fondos negros
+            while (finalFooter.length < 4) {
+              finalFooter = [...finalFooter, ...dynamicImages];
+            }
+            setImages(finalFooter);
           }
         }
       })
@@ -78,12 +83,13 @@ export default function Footer() {
                 
             return (
               <motion.div
-                key={img + i} // Le sumamos el índice por si se repite la foto
+                key={`${img}-${i}`} // Llave única combinada para evitar conflictos en Framer Motion al clonar imágenes
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: i === 1 ? 1 : 0.4 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: "easeInOut" }}
+                // aspect-video asegura de que el contenedor de la imagen mantenga siempre la proporción 16:9 (Horizontal)
                 className={`absolute w-[80vw] md:w-[45vw] aspect-video ${positionClass}`}
                 style={{ zIndex: i === 1 ? 20 : 10 }}
               >

@@ -3,29 +3,19 @@
 import { useState, useRef, useEffect } from 'react';
 import ImageCropper from '../../components/ImageCropper'; 
 
-// 🚨 CONEXIÓN AL CEREBRO
 const BASE_URL = 'https://api.jpjeansvip.com/api'; 
 
 // =========================================================
 // 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB
 // =========================================================
-type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
+type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta' | 'lista'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
 const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   inicio: [
-    // 1. EL HERO PRINCIPAL (Las 3 imágenes hasta arriba de la página)
     { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    
-    // 2. EL CARRUSEL VERTICAL CENTRAL (A mitad del page.tsx)
-    { id: 'c_vert_1', titulo: 'Carrusel Central - Foto 1', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'c_vert_2', titulo: 'Carrusel Central - Foto 2', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'c_vert_3', titulo: 'Carrusel Central - Foto 3', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'c_vert_4', titulo: 'Carrusel Central - Foto 4', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'c_vert_5', titulo: 'Carrusel Central - Foto 5', tipo: 'tarjeta', aspect: 2/3 },
-    { id: 'c_vert_6', titulo: 'Carrusel Central - Foto 6', tipo: 'tarjeta', aspect: 2/3 },
-
-    // 3. SECCIONES DE ACCESO RÁPIDO EN PORTADA (Novedades y Ofertas)
+    // 🚨 CARRUSEL VERTICAL AHORA ES UNA LISTA DINÁMICA
+    { id: 'c_vert_list', titulo: 'Carrusel Central Vertical', tipo: 'lista', aspect: 2/3 },
     { id: 'home_mujer', titulo: 'Sección Portada: MUJER', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'home_hombre', titulo: 'Sección Portada: HOMBRE', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'home_nina', titulo: 'Sección Portada: NIÑA', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
@@ -66,11 +56,8 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
   rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
   complementos: [
-    // 🚨 EL FOOTER HORIZONTAL PANORÁMICO (16:9)
-    { id: 'footer_slide_1', titulo: 'Footer Carousel - Imagen 1', tipo: 'tarjeta', aspect: 16/9 },
-    { id: 'footer_slide_2', titulo: 'Footer Carousel - Imagen 2', tipo: 'tarjeta', aspect: 16/9 },
-    { id: 'footer_slide_3', titulo: 'Footer Carousel - Imagen 3', tipo: 'tarjeta', aspect: 16/9 },
-    { id: 'footer_slide_4', titulo: 'Footer Carousel - Imagen 4', tipo: 'tarjeta', aspect: 16/9 },
+    // 🚨 FOOTER AHORA ES UNA LISTA DINÁMICA INFINITA
+    { id: 'footer_list', titulo: 'Carrusel Horizontal (Footer)', tipo: 'lista', aspect: 16/9 },
   ]
 };
 
@@ -164,6 +151,35 @@ export default function AdminDashboard() {
       const [, seccionId, dispositivo] = campoDestino.split('|');
       await guardarBannerEnCerebro(seccionId, dispositivo, imagenRecortadaBase64);
     }
+    // 🚨 LÓGICA DE SUBIDA PARA LISTAS DINÁMICAS
+    else if (campoDestino.startsWith('banner_lista|')) {
+      const [, seccionId, indexStr] = campoDestino.split('|');
+      const index = parseInt(indexStr);
+      setCargando(true);
+      try {
+        const file = await base64ToFile(imagenRecortadaBase64, `lista_${seccionId}_${index}.jpg`);
+        const fd = new FormData();
+        fd.append('imagen', file);
+        const resUpload = await fetch(`${BASE_URL}/oficina/upload-directo`, { method: 'POST', body: fd });
+        const dataUpload = await resUpload.json();
+
+        if (dataUpload.exito) {
+          let listaActual = Array.isArray(bannersData[seccionId]) ? [...bannersData[seccionId]] : [];
+          listaActual[index] = { d: dataUpload.url };
+
+          await fetch(`${BASE_URL}/oficina/storefront/guardar-seccion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seccion: seccionId, datos: listaActual })
+          });
+          cargarBanners();
+          if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+        } else {
+          alert("Error subiendo foto a la lista");
+        }
+      } catch (e) { alert("Error de conexión"); }
+      finally { setCargando(false); }
+    }
     
     setFotoEnProceso(null);
     if (archivoInputRef.current) archivoInputRef.current.value = '';
@@ -178,13 +194,45 @@ export default function AdminDashboard() {
       fd.append('seccion', seccion);
       fd.append('dispositivo', dispositivo);
 
-      await fetch(`${BASE_URL}/oficina/storefront/draft`, { method: 'POST', body: fd });
-      cargarBanners(); // Refrescar JSON visual
+      const response = await fetch(`${BASE_URL}/oficina/storefront/draft`, { method: 'POST', body: fd });
+      const data = await response.json();
+      
+      if (!data.exito) {
+        alert("❌ Error en el Servidor (Hostinger): " + (data.error || "Fallo desconocido."));
+      }
+
+      cargarBanners(); 
       if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
-    } catch (e) { alert("Error actualizando banner"); } 
+    } catch (e) { alert("Error de red conectando con Hostinger."); } 
     finally { setCargando(false); }
   };
 
+  // 🚨 LÓGICA PARA AGREGAR O QUITAR ESPACIOS A LA LISTA
+  const manejarLista = async (idSeccion: string, accion: 'add' | 'remove', index?: number) => {
+    let listaActual = Array.isArray(bannersData[idSeccion]) ? [...bannersData[idSeccion]] : [];
+    
+    if (accion === 'add') {
+      listaActual.push({ d: '' });
+    } else if (accion === 'remove' && index !== undefined) {
+      listaActual.splice(index, 1);
+    }
+
+    setCargando(true);
+    try {
+      await fetch(`${BASE_URL}/oficina/storefront/guardar-seccion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seccion: idSeccion, datos: listaActual })
+      });
+      cargarBanners();
+      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+    } catch (e) { alert("Error al modificar la lista"); }
+    finally { setCargando(false); }
+  };
+
+  // ==========================================
+  // FUNCIONES DEL CATÁLOGO RESTAURADAS
+  // ==========================================
   const publicarProductoWeb = async () => {
     if (!prodSeleccionadoId || !nombreWeb) { alert("Selecciona un producto y ponle nombre comercial."); return; }
     setCargando(true);
@@ -217,9 +265,26 @@ export default function AdminDashboard() {
 
   const removerDeLaWeb = async (id: string, nombre: string) => {
     if(!confirm(`¿Ocultar "${nombre}" de la tienda en línea?`)) return;
-    alert("✅ Producto ocultado de la web exitosamente.");
-    cargarInventario();
-    if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+    setCargando(true);
+    try {
+      const formData = new FormData();
+      formData.append('estado_web', '0'); // Enviamos la orden de ocultar
+      
+      const res = await fetch(`${BASE_URL}/oficina/publicar-web/${id}`, { method: 'PUT', body: formData });
+      const data = await res.json();
+      
+      if(data.exito) {
+        alert("✅ Producto ocultado de la web exitosamente.");
+        cargarInventario();
+        if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      } else {
+        alert("❌ Error: " + data.error);
+      }
+    } catch (e) {
+      alert("Error de conexión con el servidor");
+    } finally {
+      setCargando(false);
+    }
   };
 
   const publicarBannersEnVivo = async () => {
@@ -245,20 +310,25 @@ export default function AdminDashboard() {
   const productosEnWeb = inventarioCrudo.filter(p => p.estado_web === 1);
 
   return (
-    <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-black relative pt-20">
+    <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-black relative pt-16 md:pt-20">
       
       <input type="file" accept="image/*" ref={archivoInputRef} onChange={onArchivoSeleccionado} className="hidden" />
       {fotoEnProceso && (
         <ImageCropper imageSrc={fotoEnProceso} aspectRatio={aspectRatioActual} onCropComplete={aplicarRecorte} onCancel={() => { setFotoEnProceso(null); if (archivoInputRef.current) archivoInputRef.current.value = ''; }} />
       )}
 
-      {/* PANEL IZQUIERDO: CONTROLES DEL CEO */}
       <div className="w-full md:w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9]">
         
-        <div className="h-16 bg-black text-white flex items-center justify-between px-6 shrink-0">
-          <h2 className="text-xs font-bold tracking-[0.3em] uppercase">E-Commerce Manager</h2>
-          <button onClick={publicarBannersEnVivo} className="bg-white text-black px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-200">
-            Publicar Banners Live
+        <div className="h-16 bg-black text-white flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
+          <div className="flex items-center gap-3 md:gap-6">
+            <h2 className="text-xs font-bold tracking-[0.3em] uppercase hidden xl:block">E-Commerce</h2>
+            <div className="flex gap-1 bg-white/10 p-1 rounded">
+              <button onClick={() => setSimuladorModo('mobile')} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'mobile' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Celular">📱</button>
+              <button onClick={() => setSimuladorModo('desktop')} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'desktop' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Computadora">💻</button>
+            </div>
+          </div>
+          <button onClick={publicarBannersEnVivo} className="bg-white text-black px-3 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-200 shrink-0">
+            Publicar Live
           </button>
         </div>
 
@@ -286,9 +356,7 @@ export default function AdminDashboard() {
                   <button 
                     key={sec}
                     onClick={() => setSeccionBannerActiva(sec)}
-                    className={`px-4 py-2 text-[9px] uppercase tracking-widest font-bold border transition-colors ${
-                      seccionBannerActiva === sec ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black'
-                    }`}
+                    className={`px-4 py-2 text-[9px] uppercase tracking-widest font-bold border transition-colors ${seccionBannerActiva === sec ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black'}`}
                   >
                     Sección {sec}
                   </button>
@@ -304,16 +372,14 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">
-                              Pantalla PC {item.aspectDesktop === 9/16 ? '(Vertical)' : '(Horizontal)'}
-                            </span>
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">PC {item.aspectDesktop === 9/16 ? '(Vertical)' : '(Horizontal)'}</span>
                             <div style={{ aspectRatio: item.aspectDesktop || 16/9 }} className="w-full max-w-[200px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.d ? <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
                                <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspectDesktop || 16/9)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
                             </div>
                           </div>
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Celular (Vertical)</span>
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Móvil (Vertical)</span>
                             <div style={{ aspectRatio: item.aspectMobile || 9/16 }} className="w-full max-w-[100px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.m ? <img src={getImgUrl(bannersData[item.id].m)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
                                <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|m`, item.aspectMobile || 9/16)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
@@ -321,13 +387,38 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </div>
+                    ) : item.tipo === 'lista' ? (
+                      // 🚨 INTERFAZ DE LISTA DINÁMICA INFINITA
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                          <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
+                          <button disabled={cargando} onClick={() => manejarLista(item.id, 'add')} className="bg-black text-white px-3 py-1.5 text-[9px] uppercase font-bold hover:bg-gray-800 transition-colors">
+                            + Añadir Espacio
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {(Array.isArray(bannersData[item.id]) ? bannersData[item.id] : []).map((img: any, idx: number) => (
+                            <div key={idx} className="relative group mt-3">
+                              <span className="absolute -top-3 left-0 text-[8px] font-bold text-gray-400 uppercase">Espacio {idx + 1}</span>
+                              <div style={{ aspectRatio: item.aspect }} className="bg-gray-100 border border-dashed border-gray-300 overflow-hidden relative">
+                                 {img.d ? <img src={getImgUrl(img.d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
+                                 <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner_lista|${item.id}|${idx}`, item.aspect || 1)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] font-bold uppercase transition-all">Cambiar</button>
+                              </div>
+                              <button disabled={cargando} onClick={() => manejarLista(item.id, 'remove', idx)} className="absolute top-0 right-0 translate-x-2 -translate-y-2 bg-red-600 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center hover:bg-red-700 shadow-md">✕</button>
+                            </div>
+                          ))}
+                          {(Array.isArray(bannersData[item.id]) ? bannersData[item.id] : []).length === 0 && (
+                             <div className="col-span-2 md:col-span-4 p-8 text-center border border-dashed border-gray-300 bg-gray-50 mt-2">
+                                <p className="text-[10px] text-gray-400 uppercase tracking-widest">No hay imágenes. Añade un espacio.</p>
+                             </div>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
-                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">
-                            Recorte forzado {item.aspect === 16/9 ? 'Horizontal (16:9)' : item.aspect === 9/16 ? 'Vertical (9:16)' : 'Vertical (2:3)'}
-                          </span>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">Forzado {item.aspect === 16/9 ? 'Horizontal (16:9)' : item.aspect === 9/16 ? 'Vertical (9:16)' : 'Vertical (2:3)'}</span>
                         </div>
                         <div className="flex items-center gap-4">
                           <div style={{ aspectRatio: item.aspect || 1 }} className="w-[60px] bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
@@ -337,50 +428,8 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     )}
-
                   </div>
                 ))}
-              </div>
-
-            </div>
-          )}
-
-          {/* ========================================== */}
-          {/* MÓDULO: GESTIÓN WEB (CONTROL DE DAÑOS) */}
-          {/* ========================================== */}
-          {menuActivo === 'gestion' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
-              <div className="flex flex-col gap-2">
-                {productosEnWeb.length === 0 ? (
-                  <div className="p-8 text-center bg-gray-50 border border-gray-200"><p className="text-[10px] tracking-widest uppercase text-gray-400">No hay productos públicos en la web.</p></div>
-                ) : (
-                  productosEnWeb.map((prod) => (
-                    <div key={prod.id} className="bg-white p-4 border border-gray-200 flex justify-between items-center shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <img src={getImgUrl(prod.url_foto_principal) || "https://via.placeholder.com/50"} alt={prod.nombre_web} className="w-12 h-16 object-cover bg-gray-100 border border-gray-200"/>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-[11px] uppercase tracking-wider">{prod.nombre_web || prod.nombre}</span>
-                          <span className="text-[9px] text-gray-400 tracking-widest uppercase">SKU: {prod.sku} | Bodega: {prod.stock_bodega} pzs</span>
-                        </div>
-                      </div>
-                      <button onClick={() => removerDeLaWeb(prod.id, prod.nombre_web || prod.nombre)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors">Ocultar</button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ========================================== */}
-          {/* MÓDULO: TEXTOS EN VIVO */}
-          {/* ========================================== */}
-          {menuActivo === 'textos' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Modificador de Textos (En Vivo)</h3>
-              <div className="bg-blue-50 border border-blue-200 p-6 rounded text-center">
-                <span className="text-3xl mb-4 block">✏️</span>
-                <p className="text-[11px] uppercase tracking-widest font-bold text-blue-800 mb-2">Conexión Dinámica Pendiente</p>
               </div>
             </div>
           )}
@@ -474,30 +523,54 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ========================================== */}
+          {/* MÓDULO: GESTIÓN WEB (CONTROL DE DAÑOS) */}
+          {/* ========================================== */}
+          {menuActivo === 'gestion' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
+              <div className="flex flex-col gap-2">
+                {productosEnWeb.length === 0 ? (
+                  <div className="p-8 text-center bg-gray-50 border border-gray-200"><p className="text-[10px] tracking-widest uppercase text-gray-400">No hay productos públicos en la web.</p></div>
+                ) : (
+                  productosEnWeb.map((prod) => (
+                    <div key={prod.id} className="bg-white p-4 border border-gray-200 flex justify-between items-center shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <img src={getImgUrl(prod.url_foto_principal) || "https://via.placeholder.com/50"} alt={prod.nombre_web} className="w-12 h-16 object-cover bg-gray-100 border border-gray-200"/>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[11px] uppercase tracking-wider">{prod.nombre_web || prod.nombre}</span>
+                          <span className="text-[9px] text-gray-400 tracking-widest uppercase">SKU: {prod.sku} | Bodega: {prod.stock_bodega} pzs</span>
+                        </div>
+                      </div>
+                      <button onClick={() => removerDeLaWeb(prod.id, prod.nombre_web || prod.nombre)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors">Ocultar</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* MÓDULO: TEXTOS EN VIVO */}
+          {/* ========================================== */}
+          {menuActivo === 'textos' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Modificador de Textos (En Vivo)</h3>
+              <div className="bg-blue-50 border border-blue-200 p-6 rounded text-center">
+                <span className="text-3xl mb-4 block">✏️</span>
+                <p className="text-[11px] uppercase tracking-widest font-bold text-blue-800 mb-2">Conexión Dinámica Pendiente</p>
+              </div>
+            </div>
+          )}
+          
         </div>
       </div>
 
-      {/* PANEL DERECHO: EL SIMULADOR INTERCALABLE */}
-      <div className="hidden md:flex w-[55%] h-full bg-gray-200 p-4 flex-col border-l border-black overflow-hidden relative">
-        <div className="flex justify-between items-center mb-4 px-4 bg-white py-3 rounded-lg shadow-sm border border-gray-300 shrink-0">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-black flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Simulador en Vivo
-          </span>
-          <div className="flex gap-2 bg-gray-100 p-1 rounded">
-            <button onClick={() => setSimuladorModo('mobile')} className={`p-2 rounded transition-all ${simuladorModo === 'mobile' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-black'}`} title="Vista Celular">📱</button>
-            <button onClick={() => setSimuladorModo('desktop')} className={`p-2 rounded transition-all ${simuladorModo === 'desktop' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-black'}`} title="Vista Computadora">💻</button>
-          </div>
+      <div className="hidden md:flex w-[55%] h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-hidden relative items-center justify-center">
+        <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-[375px] h-[812px]' : 'w-full h-full'} bg-white rounded-2xl shadow-2xl overflow-hidden border-[8px] border-black relative`}>
+          <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
+          {simuladorModo === 'mobile' && (<div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-xl"></div></div>)}
         </div>
-
-        <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
-          <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-[375px]' : 'w-full'} h-full bg-white rounded-xl shadow-2xl overflow-hidden border-[6px] border-black relative`}>
-            <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
-            {simuladorModo === 'mobile' && (
-              <div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-xl"></div></div>
-            )}
-          </div>
-        </div>
-
       </div>
     </div>
   );
