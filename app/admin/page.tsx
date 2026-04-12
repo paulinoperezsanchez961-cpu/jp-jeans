@@ -7,20 +7,27 @@ const BASE_URL = 'https://api.jpjeansvip.com/api';
 const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
 // =========================================================
-// 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB
+// 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB (PERFECCIONADO)
 // =========================================================
 type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta' | 'lista'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
 const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   inicio: [
+    // HÉROES PRINCIPALES: Pantalla completa = PC (16:9), Móvil (9:16)
     { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    
+    // CARRUSEL CENTRAL
     { id: 'c_vert_list', titulo: 'Carrusel Central Vertical', tipo: 'lista', aspect: 2/3 },
-    { id: 'home_mujer', titulo: 'Sección Portada: MUJER', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    { id: 'home_hombre', titulo: 'Sección Portada: HOMBRE', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    { id: 'home_nina', titulo: 'Sección Portada: NIÑA', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    { id: 'home_nino', titulo: 'Sección Portada: NIÑO', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    { id: 'home_rebajas', titulo: 'Sección Portada: REBAJAS', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
+    
+    // PORTADAS SPLIT SCREEN: PC Mitad de Pantalla (3:4), Móvil 80vh (2:3)
+    { id: 'home_mujer', titulo: 'Portada: MUJER (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
+    { id: 'home_hombre', titulo: 'Portada: HOMBRE (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
+    { id: 'home_nina', titulo: 'Portada: NIÑA (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
+    { id: 'home_nino', titulo: 'Portada: NIÑO (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
+    
+    // REBAJAS: Pantalla completa
+    { id: 'home_rebajas', titulo: 'Portada: REBAJAS (Completa)', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
   ],
   hombre: [
     { id: 'hombre', titulo: 'Hero Hombre', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
@@ -28,6 +35,7 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'h_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_playeras', titulo: 'Categoría: Playeras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
+    // Cortes de Jeans (Tarjetas altas)
     { id: 'h_corte_baggy', titulo: 'Corte Jeans: Baggy', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'h_corte_cargo', titulo: 'Corte Jeans: Cargo', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'h_corte_recto', titulo: 'Corte Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
@@ -39,6 +47,7 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_cat_vestidos', titulo: 'Categoría: Vestidos y Faldas', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
+    // Cortes de Jeans (Tarjetas altas)
     { id: 'm_corte_holgado', titulo: 'Jeans: Holgado', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_wideleg', titulo: 'Jeans: Wide Leg', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_recto', titulo: 'Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
@@ -47,14 +56,24 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_corte_skinny', titulo: 'Jeans: Skinny', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_colombiano', titulo: 'Jeans: Colombiano', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_barrel', titulo: 'Jeans: Barrel', tipo: 'tarjeta', aspect: 9/16 },
-    { id: 'm_sub_vestidos', titulo: 'Sub: Vestidos', tipo: 'tarjeta', aspect: 9/16 },
-    { id: 'm_sub_faldas', titulo: 'Sub: Faldas', tipo: 'tarjeta', aspect: 9/16 },
-    { id: 'm_sub_chamarras', titulo: 'Sub: Chamarras', tipo: 'tarjeta', aspect: 9/16 },
-    { id: 'm_sub_tops', titulo: 'Sub: Tops', tipo: 'tarjeta', aspect: 9/16 },
+    // Subcategorías (Banners dobles)
+    { id: 'm_sub_vestidos', titulo: 'Banner Doble: Vestidos', tipo: 'tarjeta', aspect: 3/4 },
+    { id: 'm_sub_faldas', titulo: 'Banner Doble: Faldas', tipo: 'tarjeta', aspect: 3/4 },
+    { id: 'm_sub_chamarras', titulo: 'Banner Doble: Chamarras', tipo: 'tarjeta', aspect: 3/4 },
+    { id: 'm_sub_tops', titulo: 'Banner Doble: Tops', tipo: 'tarjeta', aspect: 3/4 },
   ],
-  nina: [ { id: 'nina', titulo: 'Hero Niña', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
-  nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
-  rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
+  novedades: [
+    { id: 'novedades', titulo: 'Hero Novedades', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 }
+  ],
+  nina: [ 
+    { id: 'nina', titulo: 'Hero Niña', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
+  ],
+  nino: [ 
+    { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
+  ],
+  rebajas: [ 
+    { id: 'rebajas', titulo: 'Hero Rebajas (Opción Futura)', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
+  ],
   complementos: [
     { id: 'footer_list', titulo: 'Carrusel Horizontal (Footer)', tipo: 'lista', aspect: 16/9 },
   ]
@@ -64,7 +83,10 @@ export default function AdminDashboard() {
   const [menuActivo, setMenuActivo] = useState<'banners' | 'productos' | 'gestion' | 'textos'>('banners');
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState('');
+  
+  // 💡 ESTADOS: Control de visualización del simulador
   const [simuladorModo, setSimuladorModo] = useState<'mobile' | 'desktop'>('mobile');
+  const [pantallaCompleta, setPantallaCompleta] = useState(false);
 
   const [fotoEnProceso, setFotoEnProceso] = useState<string | null>(null);
   const [aspectRatioActual, setAspectRatioActual] = useState<number>(1);
@@ -322,15 +344,21 @@ export default function AdminDashboard() {
         <ImageCropper imageSrc={fotoEnProceso} aspectRatio={aspectRatioActual} onCropComplete={aplicarRecorte} onCancel={() => { setFotoEnProceso(null); if (archivoInputRef.current) archivoInputRef.current.value = ''; }} />
       )}
 
+      {/* PANEL IZQUIERDO (Gestión) */}
       <div className="w-full md:w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9]">
         
+        {/* BARRA DE HERRAMIENTAS */}
         <div className="h-16 bg-black text-white flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
           <div className="flex items-center gap-3 md:gap-6">
             <h2 className="text-xs font-bold tracking-[0.3em] uppercase hidden xl:block">E-Commerce</h2>
+            
+            {/* BOTONES DE VISTA (Mobile, Desktop, Fullscreen) */}
             <div className="flex gap-1 bg-white/10 p-1 rounded">
-              <button onClick={() => setSimuladorModo('mobile')} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'mobile' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Celular">📱</button>
-              <button onClick={() => setSimuladorModo('desktop')} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'desktop' ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Computadora">💻</button>
+              <button onClick={() => { setSimuladorModo('mobile'); setPantallaCompleta(false); }} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'mobile' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Celular">📱</button>
+              <button onClick={() => { setSimuladorModo('desktop'); setPantallaCompleta(false); }} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'desktop' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Computadora">💻</button>
+              <button onClick={() => setPantallaCompleta(true)} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Pantalla Completa">🖥️</button>
             </div>
+
           </div>
           <button onClick={publicarBannersEnVivo} className="bg-white text-black px-3 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-200 shrink-0">
             Publicar Live
@@ -374,14 +402,19 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">PC (Horizontal)</span>
+                            {/* ETIQUETA DINÁMICA PERFECTA */}
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">
+                              PC ({item.aspectDesktop === 16/9 ? 'Horizontal 16:9' : item.aspectDesktop === 3/4 ? 'Vertical 3:4' : 'Estándar'})
+                            </span>
                             <div style={{ aspectRatio: item.aspectDesktop || 16/9 }} className="w-full max-w-[200px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.d ? <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
                                <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspectDesktop || 16/9)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
                             </div>
                           </div>
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Móvil (Vertical)</span>
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">
+                              Móvil ({item.aspectMobile === 9/16 ? 'Vertical Alto 9:16' : item.aspectMobile === 2/3 ? 'Vertical Retrato 2:3' : 'Vertical'})
+                            </span>
                             <div style={{ aspectRatio: item.aspectMobile || 9/16 }} className="w-full max-w-[100px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.m ? <img src={getImgUrl(bannersData[item.id].m)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
                                <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|m`, item.aspectMobile || 9/16)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
@@ -419,7 +452,9 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
-                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">Forzado {item.aspect === 16/9 ? 'Horizontal (16:9)' : item.aspect === 9/16 ? 'Vertical (9:16)' : 'Vertical (2:3)'}</span>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-widest">
+                            Forzado {item.aspect === 16/9 ? 'Horizontal (16:9)' : item.aspect === 9/16 ? 'Vertical Alto (9:16)' : item.aspect === 3/4 ? 'Vertical (3:4)' : 'Vertical (2:3)'}
+                          </span>
                         </div>
                         <div className="flex items-center gap-4">
                           <div style={{ aspectRatio: item.aspect || 1 }} className="w-[60px] bg-gray-100 border border-dashed border-gray-300 relative overflow-hidden">
@@ -555,15 +590,40 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="hidden md:flex flex-1 h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-y-auto items-center">
+      {/* 💡 PANEL DERECHO (SIMULADOR IFRAME) */}
+      <div className={`
+        transition-all duration-500 ease-in-out
+        ${pantallaCompleta 
+            ? 'fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex justify-center items-center p-4 md:p-10' 
+            : 'hidden md:flex flex-1 h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-y-auto items-center'}
+      `}>
+        
+        {/* BOTÓN PARA SALIR DE FULLSCREEN */}
+        {pantallaCompleta && (
+          <button 
+            onClick={() => setPantallaCompleta(false)} 
+            className="absolute top-6 right-6 md:top-10 md:right-10 bg-white text-black w-12 h-12 rounded-full font-black text-xl hover:scale-110 transition-transform shadow-2xl z-50 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        )}
+
         <div 
           className={`transition-all duration-500 ease-in-out bg-white overflow-hidden relative my-auto
-          ${simuladorModo === 'mobile' 
-            ? 'w-[375px] min-w-[375px] h-[812px] min-h-[812px] shrink-0 rounded-[2.5rem] border-[12px] border-black shadow-[0_0_50px_rgba(0,0,0,0.2)]' 
-            : 'w-full h-full rounded-2xl shadow-2xl border-[6px] border-black'}`}
+          ${pantallaCompleta 
+            ? 'w-full h-full max-w-[1600px] rounded-xl shadow-[0_0_100px_rgba(0,0,0,0.5)] border-none' 
+            : (simuladorModo === 'mobile' 
+                ? 'w-[375px] min-w-[375px] h-[812px] min-h-[812px] shrink-0 rounded-[2.5rem] border-[12px] border-black shadow-[0_0_50px_rgba(0,0,0,0.2)]' 
+                : 'w-full h-full rounded-2xl shadow-2xl border-[6px] border-black')}`} 
         >
           <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
-          {simuladorModo === 'mobile' && (<div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-2xl"></div></div>)}
+          
+          {/* Notch del celular */}
+          {simuladorModo === 'mobile' && !pantallaCompleta && (
+             <div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none">
+                 <div className="w-32 h-6 bg-black rounded-b-2xl"></div>
+             </div>
+          )}
         </div>
       </div>
     </div>

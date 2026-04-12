@@ -136,7 +136,8 @@ export default function Home() {
 
       {/* 2. NOVEDADES HOMBRE Y MUJER */}
       <section ref={refNovedades} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
-        <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
+        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
+        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.m})` }} />
           <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
@@ -150,7 +151,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
+        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
+        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.m})` }} />
           <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
@@ -183,7 +185,8 @@ export default function Home() {
 
       {/* 4. SPLIT SCREEN: NIÑA Y NIÑO */}
       <section ref={refKids} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
-        <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
+        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
+        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
@@ -197,7 +200,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
+        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
+        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nino.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nino.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
