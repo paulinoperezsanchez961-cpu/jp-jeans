@@ -7,26 +7,19 @@ const BASE_URL = 'https://api.jpjeansvip.com/api';
 const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
 // =========================================================
-// 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB (PERFECCIONADO)
+// 🧠 DICCIONARIO MAESTRO DE ESCAPARATE WEB (MATEMÁTICA EXACTA)
 // =========================================================
 type BannerConfig = { id: string; titulo: string; tipo: 'hero' | 'tarjeta' | 'lista'; aspect?: number; aspectDesktop?: number; aspectMobile?: number; };
 const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   inicio: [
-    // HÉROES PRINCIPALES: Pantalla completa = PC (16:9), Móvil (9:16)
     { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    
-    // CARRUSEL CENTRAL
     { id: 'c_vert_list', titulo: 'Carrusel Central Vertical', tipo: 'lista', aspect: 2/3 },
-    
-    // PORTADAS SPLIT SCREEN: PC Mitad de Pantalla (3:4), Móvil 80vh (2:3)
     { id: 'home_mujer', titulo: 'Portada: MUJER (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
     { id: 'home_hombre', titulo: 'Portada: HOMBRE (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
     { id: 'home_nina', titulo: 'Portada: NIÑA (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
     { id: 'home_nino', titulo: 'Portada: NIÑO (Mitad PC)', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 2/3 },
-    
-    // REBAJAS: Pantalla completa
     { id: 'home_rebajas', titulo: 'Portada: REBAJAS (Completa)', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
   ],
   hombre: [
@@ -35,7 +28,6 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'h_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_playeras', titulo: 'Categoría: Playeras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'h_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
-    // Cortes de Jeans (Tarjetas altas)
     { id: 'h_corte_baggy', titulo: 'Corte Jeans: Baggy', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'h_corte_cargo', titulo: 'Corte Jeans: Cargo', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'h_corte_recto', titulo: 'Corte Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
@@ -47,7 +39,6 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_cat_vestidos', titulo: 'Categoría: Vestidos y Faldas', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_chamarras', titulo: 'Categoría: Chamarras', tipo: 'tarjeta', aspect: 2/3 },
     { id: 'm_cat_accesorios', titulo: 'Categoría: Accesorios', tipo: 'tarjeta', aspect: 2/3 },
-    // Cortes de Jeans (Tarjetas altas)
     { id: 'm_corte_holgado', titulo: 'Jeans: Holgado', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_wideleg', titulo: 'Jeans: Wide Leg', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_recto', titulo: 'Jeans: Recto', tipo: 'tarjeta', aspect: 9/16 },
@@ -56,11 +47,11 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_corte_skinny', titulo: 'Jeans: Skinny', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_colombiano', titulo: 'Jeans: Colombiano', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_barrel', titulo: 'Jeans: Barrel', tipo: 'tarjeta', aspect: 9/16 },
-    // Subcategorías (Banners dobles)
-    { id: 'm_sub_vestidos', titulo: 'Banner Doble: Vestidos', tipo: 'tarjeta', aspect: 3/4 },
-    { id: 'm_sub_faldas', titulo: 'Banner Doble: Faldas', tipo: 'tarjeta', aspect: 3/4 },
-    { id: 'm_sub_chamarras', titulo: 'Banner Doble: Chamarras', tipo: 'tarjeta', aspect: 3/4 },
-    { id: 'm_sub_tops', titulo: 'Banner Doble: Tops', tipo: 'tarjeta', aspect: 3/4 },
+    // 💡 CAMBIO CRÍTICO: Los banners dobles de mujer ahora piden foto para Celular (9:16) y PC (3:4)
+    { id: 'm_sub_vestidos', titulo: 'Banner Doble: Vestidos', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
+    { id: 'm_sub_faldas', titulo: 'Banner Doble: Faldas', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
+    { id: 'm_sub_chamarras', titulo: 'Banner Doble: Chamarras', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
+    { id: 'm_sub_tops', titulo: 'Banner Doble: Tops', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
   ],
   novedades: [
     { id: 'novedades', titulo: 'Hero Novedades', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 }
@@ -72,7 +63,7 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
   ],
   rebajas: [ 
-    { id: 'rebajas', titulo: 'Hero Rebajas (Opción Futura)', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
+    { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } 
   ],
   complementos: [
     { id: 'footer_list', titulo: 'Carrusel Horizontal (Footer)', tipo: 'lista', aspect: 16/9 },
@@ -84,19 +75,23 @@ export default function AdminDashboard() {
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState('');
   
-  // 💡 ESTADOS: Control de visualización del simulador
+  // ESTADOS: Control del Simulador
   const [simuladorModo, setSimuladorModo] = useState<'mobile' | 'desktop'>('mobile');
   const [pantallaCompleta, setPantallaCompleta] = useState(false);
+  const [mostrarSimuladorMovil, setMostrarSimuladorMovil] = useState(false);
 
+  // ESTADOS: Recorte y Fotos
   const [fotoEnProceso, setFotoEnProceso] = useState<string | null>(null);
   const [aspectRatioActual, setAspectRatioActual] = useState<number>(1);
   const [campoDestino, setCampoDestino] = useState<string>('');
   const archivoInputRef = useRef<HTMLInputElement>(null);
 
+  // ESTADOS: Base de Datos
   const [inventarioCrudo, setInventarioCrudo] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
+  // ESTADOS: Enriquecimiento de Catálogo
   const [prodSeleccionadoId, setProdSeleccionadoId] = useState('');
   const [nombreWeb, setNombreWeb] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -107,6 +102,10 @@ export default function AdminDashboard() {
 
   const [seccionBannerActiva, setSeccionBannerActiva] = useState<string>('inicio');
   const [bannersData, setBannersData] = useState<any>({});
+
+  // 💡 ESTADOS: Textos Dinámicos
+  const [textosHombre, setTextosHombre] = useState({ titulo: '', descripcion: '' });
+  const [textosMujer, setTextosMujer] = useState({ titulo: '', descripcion: '' });
 
   useEffect(() => {
     if (autenticado) {
@@ -125,23 +124,22 @@ export default function AdminDashboard() {
   const cargarBanners = () => {
     fetch(`${BASE_URL}/web/storefront?preview=true`)
       .then(res => res.json())
-      .then(data => { if (data.exito) setBannersData(data.banners); })
+      .then(data => { 
+        if (data.exito) {
+            setBannersData(data.banners); 
+            // Sincronizamos los textos si existen en el Cerebro
+            if(data.banners.textos_hombre) setTextosHombre(data.banners.textos_hombre);
+            if(data.banners.textos_mujer) setTextosMujer(data.banners.textos_mujer);
+        }
+      })
       .catch(console.error);
   };
 
-  // 🚨 EL AUTO-SANADOR NATIVO (Basado en la investigación de carpeta Public)
   const getImgUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    
-    // Limpiamos rastros de URLs viejas y sucias si el servidor tenía caché
     let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
-    
-    // Si la ruta trae el truco sucio de ?f=, lo eliminamos y usamos el nombre del archivo limpio
-    if (cleanPath.includes('?f=')) {
-        cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
-    }
-    
+    if (cleanPath.includes('?f=')) { cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`; }
     cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
     return `${API_DOMAIN}${cleanPath}`;
   };
@@ -314,11 +312,30 @@ export default function AdminDashboard() {
     }
   };
 
+  // 💡 LÓGICA PARA GUARDAR TEXTOS AL CEREBRO
+  const guardarTextos = async (seccionBD: string, datosTexto: any) => {
+    setCargando(true);
+    try {
+      await fetch(`${BASE_URL}/oficina/storefront/guardar-seccion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seccion: seccionBD, datos: datosTexto })
+      });
+      alert(`✅ Textos guardados en el borrador.`);
+      cargarBanners();
+      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+    } catch(e) {
+      alert("Error al guardar textos");
+    } finally { 
+      setCargando(false); 
+    }
+  };
+
   const publicarBannersEnVivo = async () => {
     if(!confirm("Esto impactará la página web en vivo mundialmente. ¿Continuar?")) return;
     try {
       await fetch(`${BASE_URL}/oficina/storefront/publicar`, { method: 'POST' });
-      alert("🚀 Banners publicados mundialmente.");
+      alert("🚀 Banners y Textos publicados mundialmente.");
     } catch (e) { alert("Error al publicar"); }
   };
 
@@ -339,45 +356,63 @@ export default function AdminDashboard() {
   return (
     <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-black relative pt-16 md:pt-20">
       
+      {/* COMPONENTE DE RECORTE */}
       <input type="file" accept="image/*" ref={archivoInputRef} onChange={onArchivoSeleccionado} className="hidden" />
       {fotoEnProceso && (
         <ImageCropper imageSrc={fotoEnProceso} aspectRatio={aspectRatioActual} onCropComplete={aplicarRecorte} onCancel={() => { setFotoEnProceso(null); if (archivoInputRef.current) archivoInputRef.current.value = ''; }} />
       )}
 
-      {/* PANEL IZQUIERDO (Gestión) */}
-      <div className="w-full md:w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9]">
+      {/* PANEL IZQUIERDO */}
+      <div className={`w-full md:w-[45%] h-full flex flex-col border-r border-gray-300 bg-[#f9f9f9] ${mostrarSimuladorMovil ? 'hidden md:flex' : 'flex'}`}>
         
-        {/* BARRA DE HERRAMIENTAS */}
+        {/* BARRA SUPERIOR */}
         <div className="h-16 bg-black text-white flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
           <div className="flex items-center gap-3 md:gap-6">
             <h2 className="text-xs font-bold tracking-[0.3em] uppercase hidden xl:block">E-Commerce</h2>
             
-            {/* BOTONES DE VISTA (Mobile, Desktop, Fullscreen) */}
+            {/* BOTONES DE VISTA */}
             <div className="flex gap-1 bg-white/10 p-1 rounded">
-              <button onClick={() => { setSimuladorModo('mobile'); setPantallaCompleta(false); }} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'mobile' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Celular">📱</button>
-              <button onClick={() => { setSimuladorModo('desktop'); setPantallaCompleta(false); }} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'desktop' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Vista Computadora">💻</button>
-              <button onClick={() => setPantallaCompleta(true)} className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} title="Pantalla Completa">🖥️</button>
+              <button 
+                onClick={() => { setSimuladorModo('mobile'); if (window.innerWidth < 768) setMostrarSimuladorMovil(true); }} 
+                className={`p-1.5 rounded transition-all text-xs md:text-sm flex items-center justify-center ${simuladorModo === 'mobile' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} 
+                title="Vista Celular"
+              >📱</button>
+              
+              <button 
+                onClick={() => { setSimuladorModo('desktop'); setPantallaCompleta(false); }} 
+                className={`p-1.5 rounded transition-all text-xs md:text-sm hidden md:flex items-center justify-center ${simuladorModo === 'desktop' && !pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} 
+                title="Vista Computadora"
+              >💻</button>
+              
+              <button 
+                onClick={() => setPantallaCompleta(true)} 
+                className={`p-1.5 rounded transition-all text-xs md:text-sm hidden md:flex items-center justify-center ${pantallaCompleta ? 'bg-white shadow text-black' : 'text-gray-400 hover:text-white'}`} 
+                title="Pantalla Completa"
+              >🖥️</button>
             </div>
-
           </div>
+
           <button onClick={publicarBannersEnVivo} className="bg-white text-black px-3 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-200 shrink-0">
             Publicar Live
           </button>
         </div>
 
+        {/* PESTAÑAS */}
         <div className="flex border-b border-gray-300 bg-white shrink-0 overflow-x-auto hide-scrollbar">
           {[
-            { id: 'banners', label: 'Escaparate Múltiple' },
+            { id: 'banners', label: 'Escaparate' },
+            { id: 'textos', label: 'Textos' },
             { id: 'productos', label: 'Catálogo' },
             { id: 'gestion', label: 'Control Web' },
-            { id: 'textos', label: 'Textos' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setMenuActivo(tab.id as any)} className={`px-6 py-4 text-[10px] tracking-widest uppercase whitespace-nowrap transition-colors ${menuActivo === tab.id ? 'border-b-2 border-black font-bold' : 'text-gray-500 hover:text-black'}`}>{tab.label}</button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        {/* CONTENIDO (Formularios y Carga) */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           
+          {/* PESTAÑA 1: BANNERS */}
           {menuActivo === 'banners' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
@@ -402,7 +437,6 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col items-center gap-2">
-                            {/* ETIQUETA DINÁMICA PERFECTA */}
                             <span className="text-[9px] text-gray-400 uppercase tracking-widest">
                               PC ({item.aspectDesktop === 16/9 ? 'Horizontal 16:9' : item.aspectDesktop === 3/4 ? 'Vertical 3:4' : 'Estándar'})
                             </span>
@@ -470,6 +504,30 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* 💡 PESTAÑA 2: TEXTOS DINÁMICOS */}
+          {menuActivo === 'textos' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Textos de Colecciones</h3>
+              
+              {/* Textos Hombre */}
+              <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-black">Colección Hombre</span>
+                  <input type="text" value={textosHombre.titulo} onChange={e => setTextosHombre({...textosHombre, titulo: e.target.value})} placeholder="Título de la página (Ej: La Colección Hombre)" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
+                  <textarea value={textosHombre.descripcion} onChange={e => setTextosHombre({...textosHombre, descripcion: e.target.value})} placeholder="Descripción debajo del título..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black uppercase"></textarea>
+                  <button onClick={() => guardarTextos('textos_hombre', textosHombre)} disabled={cargando} className="bg-black text-white px-4 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gray-800 transition-colors">Guardar Textos Hombre</button>
+              </div>
+
+              {/* Textos Mujer */}
+              <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-black">Colección Mujer</span>
+                  <input type="text" value={textosMujer.titulo} onChange={e => setTextosMujer({...textosMujer, titulo: e.target.value})} placeholder="Título de la página (Ej: La Colección Mujer)" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
+                  <textarea value={textosMujer.descripcion} onChange={e => setTextosMujer({...textosMujer, descripcion: e.target.value})} placeholder="Descripción debajo del título..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black uppercase"></textarea>
+                  <button onClick={() => guardarTextos('textos_mujer', textosMujer)} disabled={cargando} className="bg-black text-white px-4 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gray-800 transition-colors">Guardar Textos Mujer</button>
+              </div>
+            </div>
+          )}
+
+          {/* PESTAÑA 3: CATÁLOGO */}
           {menuActivo === 'productos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Enriquecimiento de Catálogo</h3>
@@ -553,6 +611,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* PESTAÑA 4: GESTIÓN */}
           {menuActivo === 'gestion' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
@@ -576,55 +635,50 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-
-          {menuActivo === 'textos' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Modificador de Textos (En Vivo)</h3>
-              <div className="bg-blue-50 border border-blue-200 p-6 rounded text-center">
-                <span className="text-3xl mb-4 block">✏️</span>
-                <p className="text-[11px] uppercase tracking-widest font-bold text-blue-800 mb-2">Conexión Dinámica Pendiente</p>
-              </div>
-            </div>
-          )}
           
         </div>
       </div>
 
-      {/* 💡 PANEL DERECHO (SIMULADOR IFRAME) */}
+      {/* PANEL DERECHO / MODAL MÓVIL (SIMULADOR IFRAME) */}
       <div className={`
         transition-all duration-500 ease-in-out
-        ${pantallaCompleta 
+        ${pantallaCompleta || mostrarSimuladorMovil
             ? 'fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex justify-center items-center p-4 md:p-10' 
             : 'hidden md:flex flex-1 h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-y-auto items-center'}
       `}>
         
-        {/* BOTÓN PARA SALIR DE FULLSCREEN */}
-        {pantallaCompleta && (
+        {(pantallaCompleta || mostrarSimuladorMovil) && (
           <button 
-            onClick={() => setPantallaCompleta(false)} 
+            onClick={() => { setPantallaCompleta(false); setMostrarSimuladorMovil(false); }} 
             className="absolute top-6 right-6 md:top-10 md:right-10 bg-white text-black w-12 h-12 rounded-full font-black text-xl hover:scale-110 transition-transform shadow-2xl z-50 flex items-center justify-center"
-          >
-            ✕
-          </button>
+          >✕</button>
         )}
 
-        <div 
-          className={`transition-all duration-500 ease-in-out bg-white overflow-hidden relative my-auto
+        <div className={`transition-all duration-500 ease-in-out bg-white overflow-hidden relative my-auto
           ${pantallaCompleta 
             ? 'w-full h-full max-w-[1600px] rounded-xl shadow-[0_0_100px_rgba(0,0,0,0.5)] border-none' 
             : (simuladorModo === 'mobile' 
-                ? 'w-[375px] min-w-[375px] h-[812px] min-h-[812px] shrink-0 rounded-[2.5rem] border-[12px] border-black shadow-[0_0_50px_rgba(0,0,0,0.2)]' 
+                ? (mostrarSimuladorMovil 
+                    ? 'w-full h-full max-h-[90vh] rounded-[2rem] shadow-2xl' 
+                    : 'w-[375px] min-w-[375px] h-[812px] min-h-[812px] shrink-0 rounded-[2.5rem] border-[12px] border-black shadow-[0_0_50px_rgba(0,0,0,0.2)]') 
                 : 'w-full h-full rounded-2xl shadow-2xl border-[6px] border-black')}`} 
         >
           <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
           
-          {/* Notch del celular */}
-          {simuladorModo === 'mobile' && !pantallaCompleta && (
+          {simuladorModo === 'mobile' && !pantallaCompleta && !mostrarSimuladorMovil && (
              <div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none">
                  <div className="w-32 h-6 bg-black rounded-b-2xl"></div>
              </div>
           )}
         </div>
+
+        {mostrarSimuladorMovil && (
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center z-50">
+            <button onClick={() => { publicarBannersEnVivo(); setMostrarSimuladorMovil(false); }} className="bg-green-600 text-white px-8 py-4 rounded-full font-bold uppercase tracking-widest shadow-[0_0_30px_rgba(22,163,74,0.6)]">
+              Publicar Live 🚀
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

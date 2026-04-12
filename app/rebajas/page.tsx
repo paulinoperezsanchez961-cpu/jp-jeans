@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
@@ -12,45 +12,10 @@ import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BASE DE DATOS DE OFERTAS COMPLETA (Actualizada con arreglo de imágenes)
-const productosDb = [
-  { id: 'O-01', nombre: 'Jeans Cargo Shadow', precioOriginal: 2400, precioOferta: 1200, genero: 'Hombre', descuento: 50,
-    imagenes: [
-      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800', 
-      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800',
-      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800'
-    ] 
-  },
-  { id: 'O-02', nombre: 'Vestido Satin Rose', precioOriginal: 1800, precioOferta: 900, genero: 'Mujer', descuento: 50,
-    imagenes: [
-      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800', 
-      'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800',
-      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800'
-    ] 
-  },
-  { id: 'O-03', nombre: 'Chamarra Denim Niña', precioOriginal: 1500, precioOferta: 1050, genero: 'Niña', descuento: 30,
-    imagenes: [
-      'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800', 
-      'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=800',
-      'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800'
-    ]
-  },
-  { id: 'O-04', nombre: 'Sudadera Basic Niño', precioOriginal: 900, precioOferta: 810, genero: 'Niño', descuento: 10,
-    imagenes: [
-      'https://images.unsplash.com/photo-1503945438517-f65904a52ce6?q=80&w=800', 
-      'https://images.unsplash.com/photo-1471286174890-9c112cbcd5b8?q=80&w=800',
-      'https://images.unsplash.com/photo-1503945438517-f65904a52ce6?q=80&w=800'
-    ]
-  },
-  { id: 'O-05', nombre: 'Playera Heavy Hombre', precioOriginal: 800, precioOferta: 560, genero: 'Hombre', descuento: 30,
-    imagenes: [
-      'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800', 
-      'https://images.unsplash.com/photo-1503341455253-b2e723bb3db8?q=80&w=800',
-      'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800'
-    ]
-  }
-];
+const BASE_URL = 'https://api.jpjeansvip.com/api';
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
+// Los 4 Círculos (Mantienen fotos de ambiente)
 const categorias = [
   { id: 'Hombre', label: 'Hombre', img: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=400' },
   { id: 'Mujer', label: 'Mujer', img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=400' },
@@ -58,22 +23,73 @@ const categorias = [
   { id: 'Niño', label: 'Niño', img: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=400' }
 ];
 
-const descuentos = [50, 30, 10];
-
 export default function RebajasPage() {
+  const [productosDb, setProductosDb] = useState<any[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   const [filtroGenero, setFiltroGenero] = useState<string | null>(null);
-  const [filtroDescuento, setFiltroDescuento] = useState<number | null>(null);
 
-  // LÓGICA DE FILTRADO DOBLE
-  let productosMostrar = productosDb.filter(p => {
-    const matchGenero = filtroGenero ? p.genero === filtroGenero : true;
-    const matchDescuento = filtroDescuento ? p.descuento === filtroDescuento : true;
-    return matchGenero && matchDescuento;
-  });
+  // 🧠 SANADOR DE IMÁGENES UNIVERSAL
+  const getImg = (path: string | undefined, fallback: string = 'https://via.placeholder.com/400x600?text=JP+Jeans') => {
+    if (!path) return fallback;
+    if (path.startsWith('http')) return path;
+    let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+    if (cleanPath.includes('?f=')) cleanPath = '/uploads/' + cleanPath.split('?f=')[1];
+    return `${API_DOMAIN}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+  };
+
+  useEffect(() => {
+    // 1. LEEMOS LA URL POR SI ALGUIEN ENTRA CON ?genero=mujer
+    const params = new URLSearchParams(window.location.search);
+    const generoURL = params.get('genero');
+    if (generoURL) {
+      setFiltroGenero(generoURL.charAt(0).toUpperCase() + generoURL.slice(1).toLowerCase());
+    }
+
+    // 2. CONECTAMOS AL CEREBRO PIDIENDO SÓLO OFERTAS (?rebajas=true)
+    fetch(`${BASE_URL}/web/catalogo?rebajas=true`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito) {
+          const mapeados = data.productos.map((p: any) => {
+            let fotosExtra = [];
+            try { if (p.urls_fotos_extra) fotosExtra = JSON.parse(p.urls_fotos_extra); } catch(e){}
+            const allImgs = [p.url_foto_principal, ...fotosExtra].filter(Boolean).map((img: string) => getImg(img));
+            if(allImgs.length === 0) allImgs.push(getImg(''));
+
+            // Cálculo matemático del porcentaje de descuento
+            const pOrig = parseFloat(p.precio_venta);
+            const pRebaja = parseFloat(p.precio_rebaja);
+            let porcentajeDescuento = 0;
+            if (pOrig > 0 && pRebaja > 0 && pOrig > pRebaja) {
+                porcentajeDescuento = Math.round(((pOrig - pRebaja) / pOrig) * 100);
+            }
+
+            return {
+              id: p.id,
+              nombre: p.nombre,
+              precioOriginal: pOrig,
+              precioOferta: pRebaja,
+              descuentoReal: porcentajeDescuento,
+              imagenes: allImgs,
+              genero: p.categoria || 'Unisex', 
+            };
+          });
+          setProductosDb(mapeados);
+        }
+        setIsLoaded(true);
+      }).catch(() => setIsLoaded(true));
+  }, []);
+
+  // FILTRADO DINÁMICO
+  let productosMostrar = [...productosDb];
+  if (filtroGenero) {
+    productosMostrar = productosMostrar.filter(p => p.genero === filtroGenero);
+  }
 
   const limpiarFiltros = () => {
     setFiltroGenero(null);
-    setFiltroDescuento(null);
+    window.history.replaceState({}, '', '/rebajas');
   };
 
   return (
@@ -84,8 +100,8 @@ export default function RebajasPage() {
 
       {/* TÍTULO */}
       <div className="w-full pt-10 pb-6 text-center bg-white relative z-10">
-        <h1 className="text-black text-4xl md:text-6xl font-thin tracking-[0.4em] uppercase">REBAJAS</h1>
-        <p className="text-gray-400 text-[10px] md:text-xs tracking-[0.3em] mt-4 uppercase">Exclusivo JP Jeans</p>
+        <h1 className="text-black text-4xl md:text-6xl font-thin tracking-[0.4em] uppercase text-red-600">REBAJAS</h1>
+        <p className="text-gray-400 text-[10px] md:text-xs tracking-[0.3em] mt-4 uppercase">Últimas Tallas JP Jeans</p>
       </div>
 
       {/* 1. CÍRCULOS DE CATEGORÍAS */}
@@ -93,42 +109,30 @@ export default function RebajasPage() {
         {categorias.map((cat) => (
           <button 
             key={cat.id} 
-            onClick={() => setFiltroGenero(filtroGenero === cat.id ? null : cat.id)}
+            onClick={() => {
+              setFiltroGenero(filtroGenero === cat.id ? null : cat.id);
+              window.history.replaceState({}, '', '/rebajas' + (filtroGenero === cat.id ? '' : `?genero=${cat.id.toLowerCase()}`));
+            }}
             className="flex flex-col items-center group shrink-0"
           >
-            <div className={`w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-2 transition-all duration-300 ${filtroGenero === cat.id ? 'border-black scale-110' : 'border-transparent opacity-70 group-hover:opacity-100'}`}>
+            <div className={`w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-2 transition-all duration-300 ${filtroGenero === cat.id ? 'border-red-600 scale-110' : 'border-transparent opacity-70 group-hover:opacity-100'}`}>
               <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
             </div>
-            <span className={`mt-4 text-[11px] md:text-sm tracking-widest uppercase font-medium ${filtroGenero === cat.id ? 'text-black' : 'text-gray-400'}`}>
+            <span className={`mt-4 text-[11px] md:text-sm tracking-widest uppercase font-medium ${filtroGenero === cat.id ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
               {cat.label}
             </span>
           </button>
         ))}
       </section>
 
-      {/* 2. BOTONES DE DESCUENTO (%) */}
-      <section className="w-full py-6 flex justify-center gap-4 md:gap-10 border-t border-gray-100 bg-gray-50/50 relative z-10">
-        {descuentos.map((desc) => (
-          <button 
-            key={desc}
-            onClick={() => setFiltroDescuento(filtroDescuento === desc ? null : desc)}
-            className={`px-6 py-2 md:px-10 md:py-3 text-[10px] md:text-xs tracking-[0.2em] uppercase transition-all border ${
-              filtroDescuento === desc ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'
-            }`}
-          >
-            -{desc}% OFF
-          </button>
-        ))}
-      </section>
-
       {/* BARRA DE ESTADO / LIMPIAR */}
-      {(filtroGenero || filtroDescuento) && (
+      {filtroGenero && (
         <div className="w-full bg-black text-white py-3 flex justify-center items-center gap-4 relative z-10">
           <span className="text-[9px] md:text-[10px] tracking-widest uppercase">
-            Filtrando por: {filtroGenero || 'Todo'} {filtroDescuento ? `(-${filtroDescuento}%)` : ''}
+            Mostrando Rebajas de: {filtroGenero}
           </span>
           <button onClick={limpiarFiltros} className="text-white border-b border-white text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
-            Limpiar filtros
+            Quitar Filtro
           </button>
         </div>
       )}
@@ -138,14 +142,18 @@ export default function RebajasPage() {
         <div className="w-full bg-black border-y border-black">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             
-            {productosMostrar.length > 0 ? (
+            {!isLoaded ? (
+               <div className="col-span-2 md:col-span-4 bg-white py-24 text-center">
+                 <p className="text-black text-[10px] md:text-xs tracking-widest uppercase animate-pulse">Buscando Ofertas...</p>
+               </div>
+            ) : productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
                 <div key={prod.id} className="group bg-white flex flex-col relative">
                   
                   {/* IMAGEN (Aspecto 2/3) */}
-                  <div className="relative w-full aspect-2/3 bg-[#f9f9f9] overflow-hidden">
+                  <div className="relative w-full aspect-[2/3] bg-[#f9f9f9] overflow-hidden">
                     
-                    {/* VISTA MÓVIL: Swiper táctil con bolitas negras */}
+                    {/* VISTA MÓVIL: Swiper táctil */}
                     <div className="md:hidden w-full h-full">
                       <Swiper
                         pagination={{ dynamicBullets: true }}
@@ -158,7 +166,7 @@ export default function RebajasPage() {
                           "--swiper-pagination-bullet-size": "5px"
                         } as React.CSSProperties}
                       >
-                        {prod.imagenes.map((img, index) => (
+                        {prod.imagenes.map((img: string, index: number) => (
                           <SwiperSlide key={index}>
                             <Link href={`/producto/${prod.id}`}>
                               <img src={img} alt={`${prod.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
@@ -175,20 +183,24 @@ export default function RebajasPage() {
                         alt={prod.nombre}
                         className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
                       />
-                      <img 
-                        src={prod.imagenes[1]} 
-                        alt={`${prod.nombre} hover`}
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      />
+                      {prod.imagenes[1] && (
+                        <img 
+                          src={prod.imagenes[1]} 
+                          alt={`${prod.nombre} hover`}
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                        />
+                      )}
                     </Link>
                     
-                    {/* BADGE DESCUENTO */}
-                    <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-2 py-1 text-[8px] font-bold uppercase tracking-widest">
-                      -{prod.descuento}%
-                    </div>
+                    {/* BADGE DESCUENTO (Automático) */}
+                    {prod.descuentoReal > 0 && (
+                        <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-2 py-1 text-[8px] font-bold uppercase tracking-widest">
+                        -{prod.descuentoReal}%
+                        </div>
+                    )}
                   </div>
 
-                  {/* INFO */}
+                  {/* INFO CENTRALIZADA TIPO REBAJAS */}
                   <div className="w-full text-center px-4 py-5 flex flex-col items-center">
                     <span className="text-gray-400 text-[8px] tracking-[0.2em] uppercase mb-1">{prod.genero}</span>
                     <Link href={`/producto/${prod.id}`}>
@@ -210,7 +222,7 @@ export default function RebajasPage() {
               ))
             ) : (
               <div className="col-span-2 md:col-span-4 bg-white py-24 text-center flex flex-col items-center">
-                <p className="text-black text-[10px] md:text-xs tracking-widest uppercase mb-4">No hay ofertas disponibles bajo este filtro.</p>
+                <p className="text-black text-[10px] md:text-xs tracking-widest uppercase mb-4">No hay prendas en rebaja en esta categoría por el momento.</p>
                 <button onClick={limpiarFiltros} className="border-b border-black text-black text-[10px] font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
                   Ver todas las ofertas
                 </button>

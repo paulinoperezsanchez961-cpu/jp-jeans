@@ -1,67 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
 // Importaciones de Swiper para el catálogo móvil
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
+import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore
 import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BASE DE DATOS DE ACCESORIOS MUJER (Actualizada con arreglo de imágenes)
-const productosDb = [
-  { id: 'AM-01', nombre: 'Bolso de Hombro Mini', precio: 1899, tipo: 'Bolsos', color: 'Negro',
-    imagenes: [
-      'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=800', 
-      'https://images.unsplash.com/photo-1591561954557-26941169b49e?q=80&w=800',
-      'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=800' // Repetida para demo
-    ] 
-  },
-  { id: 'AM-02', nombre: 'Gafas Cat Eye Retro', precio: 1299, tipo: 'Lentes', color: 'Negro',
-    imagenes: [
-      'https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800', 
-      'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=800',
-      'https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800'
-    ]
-  },
-  { id: 'AM-03', nombre: 'Collar Eslabones Chunky', precio: 999, tipo: 'Joyería', color: 'Oro',
-    imagenes: [
-      'https://images.unsplash.com/photo-1599643478514-4a48489c1653?q=80&w=800', 
-      'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800',
-      'https://images.unsplash.com/photo-1599643478514-4a48489c1653?q=80&w=800'
-    ]
-  },
-  { id: 'AM-04', nombre: 'Cinturón Hebilla Dorada', precio: 1199, tipo: 'Cinturones', color: 'Cuero',
-    imagenes: [
-      'https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800', 
-      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800',
-      'https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800'
-    ]
-  },
-  { id: 'AM-05', nombre: 'Aretes Aro Essential', precio: 699, tipo: 'Joyería', color: 'Oro',
-    imagenes: [
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800', 
-      'https://images.unsplash.com/photo-1630019852942-f89202989a59?q=80&w=800',
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800'
-    ] 
-  },
-  { id: 'AM-06', nombre: 'Tote Bag Canvas', precio: 1599, tipo: 'Bolsos', color: 'Arena',
-    imagenes: [
-      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800', 
-      'https://images.unsplash.com/photo-1605733513597-a8f8341084e6?q=80&w=800',
-      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800'
-    ]
-  }
-];
+const BASE_URL = 'https://api.jpjeansvip.com/api';
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
 export default function AccesoriosMujerPage() {
+  const [productosDb, setProductosDb] = useState<any[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const [filtroTipo, setFiltroTipo] = useState<string | null>(null);
   const [filtroColor, setFiltroColor] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState<'tipo' | 'color' | null>(null);
+
+  // 🧠 SANADOR DE IMÁGENES UNIVERSAL
+  const getImg = (path: string | undefined, fallback: string = 'https://via.placeholder.com/400x600?text=JP+Jeans') => {
+    if (!path) return fallback;
+    if (path.startsWith('http')) return path;
+    let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+    if (cleanPath.includes('?f=')) cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
+    return `${API_DOMAIN}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+  };
+
+  useEffect(() => {
+    // CARGAMOS LOS PRODUCTOS REALES (Mujer + Accesorio)
+    fetch(`${BASE_URL}/web/catalogo?genero=Mujer&tipo=Accesorio`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito) {
+          const mapeados = data.productos.map((p: any) => {
+            let fotosExtra = [];
+            try { if (p.urls_fotos_extra) fotosExtra = JSON.parse(p.urls_fotos_extra); } catch(e){}
+            const allImgs = [p.url_foto_principal, ...fotosExtra].filter(Boolean).map((img: string) => getImg(img));
+            if(allImgs.length === 0) allImgs.push(getImg(''));
+
+            return {
+              id: p.id,
+              nombre: p.nombre,
+              precio: parseFloat(p.en_rebaja ? p.precio_rebaja : p.precio_venta),
+              precioOriginal: parseFloat(p.precio_venta),
+              enRebaja: p.en_rebaja,
+              imagenes: allImgs,
+              tipo: p.nombre_corte ? p.nombre_corte : 'Accesorio', // Usamos el corte como tipo de accesorio
+              color: 'Negro' // Mock local hasta que agregues columna de color en BD
+            };
+          });
+          setProductosDb(mapeados);
+        }
+        setIsLoaded(true);
+      }).catch(() => setIsLoaded(true));
+  }, []);
 
   // LÓGICA DE FILTRADO
   let productosMostrar = [...productosDb];
@@ -74,14 +73,18 @@ export default function AccesoriosMujerPage() {
     setMenuAbierto(null);
   };
 
+  // EXTRACCIÓN DINÁMICA DE FILTROS REALES
+  const tiposDisponibles = Array.from(new Set(productosDb.map(p => p.tipo))).sort();
+  const coloresDisponibles = Array.from(new Set(productosDb.map(p => p.color))).sort();
+
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans">
       
-      {/* ESPACIO PARA NAVBAR */}
+      {/* 1. ESPACIO PARA NAVBAR */}
       <div className="w-full h-16 md:h-20 bg-black shrink-0" />
 
       {/* TÍTULO ACCESORIOS (Limpio y minimalista) */}
-      <div className="w-full pt-8 pb-10 md:pt-12 md:pb-16 text-center bg-white">
+      <div className="w-full pt-8 pb-10 md:pt-12 md:pb-16 text-center bg-white relative z-10">
         <h1 className="text-black text-3xl md:text-5xl font-light tracking-[0.3em] uppercase">
           Accesorios
         </h1>
@@ -90,15 +93,18 @@ export default function AccesoriosMujerPage() {
         </p>
       </div>
 
-      {/* BARRA DE FILTROS (z-40 para no chocar con el Navbar principal) */}
-      <div className="w-full z-40 sticky top-16 md:top-20 shadow-sm border-y border-black">
-        <div className="w-full bg-black text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
+      {/* BARRA DE FILTROS */}
+      <div className="w-full z-40 sticky top-16 md:top-20 shadow-sm border-y border-black bg-black text-white relative">
+        <div className="w-full px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
           <div className="flex items-center space-x-6">
-            <span>{productosMostrar.length} ARTÍCULOS</span>
+            <span className="text-gray-400">{productosMostrar.length} ARTÍCULOS</span>
             {(filtroTipo || filtroColor) && (
-              <button onClick={limpiarFiltros} className="text-gray-400 hover:text-white transition-colors border-b border-gray-400 hover:border-white">
-                LIMPIAR
+              <button 
+                onClick={limpiarFiltros} 
+                className="text-white hover:text-gray-300 transition-colors border-b border-transparent hover:border-white"
+              >
+                LIMPIAR TODO
               </button>
             )}
           </div>
@@ -108,67 +114,77 @@ export default function AccesoriosMujerPage() {
               onClick={() => setMenuAbierto(menuAbierto === 'tipo' ? null : 'tipo')}
               className={`transition-opacity ${filtroTipo ? 'border-b border-white font-bold' : 'hover:opacity-70'}`}
             >
-              {filtroTipo ? `Tipo: ${filtroTipo}` : 'Tipo'}
+              {filtroTipo ? `TIPO: ${filtroTipo}` : 'TIPO'}
             </button>
 
             <button 
               onClick={() => setMenuAbierto(menuAbierto === 'color' ? null : 'color')}
               className={`transition-opacity ${filtroColor ? 'border-b border-white font-bold' : 'hover:opacity-70'}`}
             >
-              {filtroColor ? `Color: ${filtroColor}` : 'Color'}
+              {filtroColor ? `COLOR: ${filtroColor}` : 'COLOR'}
             </button>
           </div>
         </div>
 
-        {/* PANELES DESPLEGABLES */}
-        {menuAbierto && (
-          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-xl z-10 px-8 py-6 text-[10px] md:text-xs tracking-widest uppercase">
-            
-            {menuAbierto === 'tipo' && (
-              <div className="flex space-x-8">
-                {['Bolsos', 'Joyería', 'Lentes', 'Cinturones'].map(t => (
-                  <button 
-                    key={t} 
-                    onClick={() => { setFiltroTipo(t); setMenuAbierto(null); }} 
-                    className={`${filtroTipo === t ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* PANELES DESPLEGABLES CON ANIMACIÓN */}
+        <AnimatePresence>
+          {menuAbierto && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-xl z-10 px-8 py-6 text-[10px] md:text-xs tracking-widest uppercase"
+            >
+              {menuAbierto === 'tipo' && (
+                <div className="flex flex-wrap gap-6">
+                  {tiposDisponibles.length > 0 ? tiposDisponibles.map((t) => (
+                    <button 
+                      key={t as string} 
+                      onClick={() => { setFiltroTipo(filtroTipo === t ? null : t as string); setMenuAbierto(null); }} 
+                      className={`${filtroTipo === t ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
+                    >
+                      {t as string}
+                    </button>
+                  )) : <span className="text-gray-400">Cargando tipos...</span>}
+                </div>
+              )}
 
-            {menuAbierto === 'color' && (
-              <div className="flex space-x-8">
-                {['Negro', 'Oro', 'Plata', 'Cuero', 'Arena'].map(c => (
-                  <button 
-                    key={c} 
-                    onClick={() => { setFiltroColor(c); setMenuAbierto(null); }} 
-                    className={`${filtroColor === c ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            )}
-            
-          </div>
-        )}
+              {menuAbierto === 'color' && (
+                <div className="flex flex-wrap gap-6">
+                  {coloresDisponibles.length > 0 ? coloresDisponibles.map((c) => (
+                    <button 
+                      key={c as string} 
+                      onClick={() => { setFiltroColor(filtroColor === c ? null : c as string); setMenuAbierto(null); }} 
+                      className={`${filtroColor === c ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
+                    >
+                      {c as string}
+                    </button>
+                  )) : <span className="text-gray-400">Cargando colores...</span>}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* CUADRÍCULA DE PRODUCTOS (Fondo blanco y cuadrícula negra) */}
+      {/* CUADRÍCULA DE PRODUCTOS (Conexión Real con Bodega) */}
       <section className="w-full flex-grow bg-white pb-12">
         <div className="w-full bg-black border-y border-black">
+          {/* 📱 MÓVIL: grid-cols-2 exacto para 2 columnas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             
-            {productosMostrar.length > 0 ? (
+            {!isLoaded ? (
+               <div className="col-span-2 md:col-span-4 bg-white py-24 text-center">
+                 <p className="text-black text-[10px] md:text-xs tracking-widest uppercase animate-pulse">Sincronizando Colección...</p>
+               </div>
+            ) : productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
                 <div key={prod.id} className="group bg-white flex flex-col relative">
 
-                  {/* IMAGEN (Aspecto 2/3) */}
+                  {/* 📐 IMAGEN (Aspecto 2/3 Exacto) */}
                   <div className="relative w-full aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
                     
-                    {/* VISTA MÓVIL: Swiper táctil con bolitas negras */}
+                    {/* VISTA MÓVIL: Swiper táctil */}
                     <div className="md:hidden w-full h-full">
                       <Swiper
                         pagination={{ dynamicBullets: true }}
@@ -181,7 +197,7 @@ export default function AccesoriosMujerPage() {
                           "--swiper-pagination-bullet-size": "5px"
                         } as React.CSSProperties}
                       >
-                        {prod.imagenes.map((img, index) => (
+                        {prod.imagenes.map((img: string, index: number) => (
                           <SwiperSlide key={index}>
                             <Link href={`/producto/${prod.id}`}>
                               <img src={img} alt={`${prod.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
@@ -198,12 +214,21 @@ export default function AccesoriosMujerPage() {
                         alt={prod.nombre}
                         className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
                       />
-                      <img 
-                        src={prod.imagenes[1]} 
-                        alt={`${prod.nombre} hover`}
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      />
+                      {prod.imagenes[1] && (
+                        <img 
+                          src={prod.imagenes[1]} 
+                          alt={`${prod.nombre} hover`}
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                        />
+                      )}
                     </Link>
+
+                    {/* ETIQUETA DE OFERTA */}
+                    {prod.enRebaja && (
+                       <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-2 py-1 text-[8px] md:text-[9px] font-bold uppercase tracking-widest">
+                         OFERTA
+                       </div>
+                    )}
 
                     {/* FAVORITO */}
                     <button className="absolute top-3 right-3 z-20 text-black hover:text-gray-400 transition bg-white/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
@@ -215,10 +240,17 @@ export default function AccesoriosMujerPage() {
 
                   {/* INFORMACIÓN */}
                   <Link href={`/producto/${prod.id}`} className="w-full text-left px-3 py-4 flex flex-col">
-                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest mb-1">
-                      ${prod.precio.toLocaleString('es-MX')} MXN
-                    </p>
-                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase">
+                    <div className="flex gap-2 items-center mb-1">
+                      {prod.enRebaja && (
+                        <p className="text-gray-400 text-[9px] line-through">
+                          ${prod.precioOriginal.toLocaleString('es-MX')}
+                        </p>
+                      )}
+                      <p className={`text-[10px] md:text-xs tracking-widest ${prod.enRebaja ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                        ${prod.precio.toLocaleString('es-MX')} MXN
+                      </p>
+                    </div>
+                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase truncate">
                       {prod.nombre}
                     </h3>
                   </Link>
@@ -226,10 +258,10 @@ export default function AccesoriosMujerPage() {
                 </div>
               ))
             ) : (
-              <div className="col-span-2 md:col-span-4 bg-white py-20 text-center flex flex-col items-center">
-                <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay accesorios que coincidan con tu búsqueda.</p>
-                <button onClick={limpiarFiltros} className="border-b border-black text-black text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
-                  Ver todos los accesorios
+              <div className="col-span-2 md:col-span-4 bg-white py-24 text-center flex flex-col items-center">
+                <p className="text-black text-[10px] md:text-xs tracking-widest uppercase mb-4">No hay accesorios disponibles bajo este filtro.</p>
+                <button onClick={limpiarFiltros} className="border-b border-black text-black text-[10px] md:text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
+                  Limpiar Filtros
                 </button>
               </div>
             )}

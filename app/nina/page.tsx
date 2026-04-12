@@ -1,67 +1,92 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
 // Importaciones de Swiper para el catálogo móvil
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
+import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore
 import 'swiper/css';
 // @ts-ignore
 import 'swiper/css/pagination';
 
-// 1. BASE DE DATOS DE NIÑA (Actualizada con arreglo de imágenes)
-const productosDb = [
-  { id: 'NN-01', nombre: 'Jeans Wide Leg Kids', precio: 899, tipo: 'Jeans', tallas: ['6', '8', '10'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800', 
-      'https://images.unsplash.com/photo-1503919005314-30d93d07d823?q=80&w=800',
-      'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800'
-    ] 
-  },
-  { id: 'NN-02', nombre: 'Vestido Floral Primavera', precio: 1199, tipo: 'Vestidos', tallas: ['4', '6', '8'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1600085108871-337ee913b860?q=80&w=800', 
-      'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?q=80&w=800',
-      'https://images.unsplash.com/photo-1600085108871-337ee913b860?q=80&w=800'
-    ]
-  },
-  { id: 'NN-03', nombre: 'Playera Básica Logo', precio: 499, tipo: 'Playeras', tallas: ['8', '10', '12'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1503919005314-30d93d07d823?q=80&w=800', 
-      'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800',
-      'https://images.unsplash.com/photo-1503919005314-30d93d07d823?q=80&w=800'
-    ]
-  },
-  { id: 'NN-04', nombre: 'Chamarra Denim Classic', precio: 1499, tipo: 'Chamarras', tallas: ['6', '8', '10', '12'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=800', 
-      'https://images.unsplash.com/photo-1503945438517-f65904a52ce6?q=80&w=800',
-      'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=800'
-    ]
-  },
-  { id: 'NN-05', nombre: 'Falda Denim Raw', precio: 799, tipo: 'Jeans', tallas: ['4', '6'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800', 
-      'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=800',
-      'https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800'
-    ] 
-  },
-  { id: 'NN-06', nombre: 'Sudadera Oversize Soft', precio: 999, tipo: 'Chamarras', tallas: ['10', '12'],
-    imagenes: [
-      'https://images.unsplash.com/photo-1503945438517-f65904a52ce6?q=80&w=800', 
-      'https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800',
-      'https://images.unsplash.com/photo-1503945438517-f65904a52ce6?q=80&w=800'
-    ]
-  }
-];
+const BASE_URL = 'https://api.jpjeansvip.com/api';
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
+
+// Imágenes por defecto
+const defaultHero = {
+  d: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?q=80&w=2000',
+  m: 'https://images.unsplash.com/photo-1519238381255-6b728068ff61?q=80&w=800'
+};
 
 export default function NinaPage() {
+  const [heroImg, setHeroImg] = useState(defaultHero);
+  const [productosDb, setProductosDb] = useState<any[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const [filtroTipo, setFiltroTipo] = useState<string | null>(null);
   const [filtroTalla, setFiltroTalla] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState<'tipo' | 'talla' | null>(null);
+
+  // 🧠 SANADOR DE IMÁGENES UNIVERSAL (Corregido sin comillas anidadas)
+  const getImg = (path: string | undefined, fallback: string = 'https://via.placeholder.com/400x600?text=JP+Jeans') => {
+    if (!path) return fallback;
+    if (path.startsWith('http')) return path;
+    let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+    if (cleanPath.includes('?f=')) cleanPath = '/uploads/' + cleanPath.split('?f=')[1];
+    return `${API_DOMAIN}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+  };
+
+  useEffect(() => {
+    const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
+
+    // 1. CARGAMOS EL HERO DE NIÑA
+    fetch(`${BASE_URL}/web/storefront${isPreview ? '?preview=true' : ''}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito && data.banners) {
+          const b = data.banners;
+          // Funciones corregidas sin comillas anidadas
+          const getImgD = (p: any, f: string) => p?.d ? `${API_DOMAIN}${p.d.includes('?f=') ? '/uploads/' + p.d.split('?f=')[1] : p.d}` : f;
+          const getImgM = (p: any, f: string) => p?.m ? `${API_DOMAIN}${p.m.includes('?f=') ? '/uploads/' + p.m.split('?f=')[1] : p.m}` : f;
+          
+          setHeroImg({
+            d: getImgD(b.nina, defaultHero.d),
+            m: getImgM(b.nina, defaultHero.m)
+          });
+        }
+      }).catch(console.error);
+
+    // 2. CARGAMOS EL CATÁLOGO COMPLETO DE NIÑA
+    fetch(`${BASE_URL}/web/catalogo?genero=Niña`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exito) {
+          const mapeados = data.productos.map((p: any) => {
+            let fotosExtra = [];
+            try { if (p.urls_fotos_extra) fotosExtra = JSON.parse(p.urls_fotos_extra); } catch(e){}
+            const allImgs = [p.url_foto_principal, ...fotosExtra].filter(Boolean).map((img: string) => getImg(img));
+            if(allImgs.length === 0) allImgs.push(getImg(''));
+
+            return {
+              id: p.id,
+              nombre: p.nombre,
+              precio: parseFloat(p.en_rebaja ? p.precio_rebaja : p.precio_venta),
+              precioOriginal: parseFloat(p.precio_venta),
+              enRebaja: p.en_rebaja,
+              imagenes: allImgs,
+              tipo: p.tipo || 'Ropa', // Extraemos el tipo de la BD
+              tallas: p.tallas_array && p.tallas_array.length > 0 ? p.tallas_array : ['4', '6', '8', '10', '12']
+            };
+          });
+          setProductosDb(mapeados);
+        }
+        setIsLoaded(true);
+      }).catch(() => setIsLoaded(true));
+  }, []);
 
   // LÓGICA DE FILTRADO
   let productosMostrar = [...productosDb];
@@ -74,17 +99,37 @@ export default function NinaPage() {
     setMenuAbierto(null);
   };
 
+  // EXTRACCIÓN DINÁMICA DE FILTROS REALES
+  const tiposDisponibles = Array.from(new Set(productosDb.map(p => p.tipo))).sort();
+  const tallasDisponibles = Array.from(new Set(productosDb.flatMap(p => p.tallas))).sort((a: any, b: any) => {
+    return parseInt(a) - parseInt(b);
+  });
+
   return (
     <div className="bg-white min-h-screen w-full flex flex-col font-sans">
       
-      {/* 2. BANNER PRINCIPAL (HERO) - MANTENIDO INTACTO */}
-      <section className="w-full h-[85vh] md:h-screen relative overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?q=80&w=2000"
-          alt="Colección Niña"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/20" />
+      {/* 1. ESPACIO PARA NAVBAR */}
+      <div className="w-full h-16 md:h-20 bg-black shrink-0" />
+
+      {/* 2. BANNER PRINCIPAL (HERO) - CERO RECORTES */}
+      <section className="w-full relative aspect-[9/16] md:aspect-[16/9] overflow-hidden bg-black">
+        <AnimatePresence>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }} className="absolute inset-0">
+            {/* Imagen Móvil */}
+            <img 
+              src={heroImg.m} 
+              alt="Colección Niña" 
+              className="md:hidden w-full h-full object-cover" 
+            />
+            {/* Imagen PC */}
+            <img 
+              src={heroImg.d} 
+              alt="Colección Niña" 
+              className="hidden md:block w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          </motion.div>
+        </AnimatePresence>
 
         <div className="absolute bottom-10 left-6 md:bottom-16 md:left-12 text-white z-10">
           <h1 className="text-3xl md:text-5xl tracking-[0.3em] uppercase font-light drop-shadow-lg">
@@ -96,15 +141,18 @@ export default function NinaPage() {
         </div>
       </section>
 
-      {/* 3. BARRA DE FILTROS (z-40 para no chocar con el Navbar) */}
-      <div className="w-full z-40 sticky top-16 md:top-20 shadow-sm bg-black border-y border-black relative">
-        <div className="w-full text-white px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
+      {/* 3. BARRA DE FILTROS */}
+      <div className="w-full z-40 sticky top-16 md:top-20 shadow-sm border-y border-black bg-black text-white relative">
+        <div className="w-full px-4 md:px-8 py-5 md:py-6 flex flex-row justify-between items-center text-[10px] md:text-xs tracking-widest uppercase relative z-20">
           
           <div className="flex items-center space-x-6">
-            <span>{productosMostrar.length} ARTÍCULOS</span>
+            <span className="text-gray-400">{productosMostrar.length} ARTÍCULOS</span>
             {(filtroTipo || filtroTalla) && (
-              <button onClick={limpiarFiltros} className="text-gray-400 hover:text-white transition-colors border-b border-gray-400 hover:border-white">
-                LIMPIAR
+              <button 
+                onClick={limpiarFiltros} 
+                className="text-white hover:text-gray-300 transition-colors border-b border-transparent hover:border-white"
+              >
+                LIMPIAR TODO
               </button>
             )}
           </div>
@@ -114,72 +162,90 @@ export default function NinaPage() {
               onClick={() => setMenuAbierto(menuAbierto === 'tipo' ? null : 'tipo')}
               className={`transition-opacity ${filtroTipo ? 'border-b border-white font-bold' : 'hover:opacity-70'}`}
             >
-              {filtroTipo ? `Tipo: ${filtroTipo}` : 'Tipo'}
+              {filtroTipo ? `TIPO: ${filtroTipo}` : 'TIPO'}
             </button>
 
             <button 
               onClick={() => setMenuAbierto(menuAbierto === 'talla' ? null : 'talla')}
               className={`transition-opacity ${filtroTalla ? 'border-b border-white font-bold' : 'hover:opacity-70'}`}
             >
-              {filtroTalla ? `Talla: ${filtroTalla}` : 'Talla'}
+              {filtroTalla ? `TALLA: ${filtroTalla}` : 'TALLA'}
             </button>
           </div>
         </div>
 
-        {/* PANELES DESPLEGABLES */}
-        {menuAbierto && (
-          <div className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-xl z-10 px-8 py-8 text-[10px] md:text-xs tracking-widest uppercase animate-in slide-in-from-top-2 duration-300">
-            
-            {menuAbierto === 'tipo' && (
-              <div className="flex space-x-12">
-                {['Jeans', 'Vestidos', 'Playeras', 'Chamarras'].map(t => (
-                  <button key={t} onClick={() => { setFiltroTipo(t); setMenuAbierto(null); }} className={`${filtroTipo === t ? 'font-bold underline underline-offset-8' : 'text-gray-400 hover:text-black'}`}>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* PANELES DESPLEGABLES CON ANIMACIÓN */}
+        <AnimatePresence>
+          {menuAbierto && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 w-full bg-white text-black border-b border-black shadow-xl z-10 px-8 py-8 text-[10px] md:text-xs tracking-widest uppercase"
+            >
+              {menuAbierto === 'tipo' && (
+                <div className="flex flex-wrap gap-6">
+                  {tiposDisponibles.length > 0 ? tiposDisponibles.map((t) => (
+                    <button 
+                      key={t as string} 
+                      onClick={() => { setFiltroTipo(filtroTipo === t ? null : t as string); setMenuAbierto(null); }} 
+                      className={`${filtroTipo === t ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
+                    >
+                      {t as string}
+                    </button>
+                  )) : <span className="text-gray-400">Cargando tipos...</span>}
+                </div>
+              )}
 
-            {menuAbierto === 'talla' && (
-              <div className="flex space-x-12">
-                {['4', '6', '8', '10', '12'].map(t => (
-                  <button key={t} onClick={() => { setFiltroTalla(t); setMenuAbierto(null); }} className={`${filtroTalla === t ? 'font-bold underline underline-offset-8' : 'text-gray-400 hover:text-black'}`}>
-                    Talla {t}
-                  </button>
-                ))}
-              </div>
-            )}
-            
-          </div>
-        )}
+              {menuAbierto === 'talla' && (
+                <div className="flex flex-wrap gap-6">
+                  {tallasDisponibles.length > 0 ? tallasDisponibles.map((t) => (
+                    <button 
+                      key={t as string} 
+                      onClick={() => { setFiltroTalla(filtroTalla === t ? null : t as string); setMenuAbierto(null); }} 
+                      className={`${filtroTalla === t ? 'font-bold border-b border-black' : 'text-gray-500 hover:text-black transition-colors'}`}
+                    >
+                      Talla {t as string}
+                    </button>
+                  )) : <span className="text-gray-400">Cargando tallas...</span>}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* 4. CUADRÍCULA DE PRODUCTOS (Fondo blanco con CUADRÍCULA NEGRA de 1px) */}
-      <section className="w-full grow bg-white pb-12">
+      {/* 4. CUADRÍCULA DE PRODUCTOS (Conexión Real con Bodega) */}
+      <section className="w-full flex-grow bg-white pb-12">
         <div className="w-full bg-black border-y border-black">
+          {/* 📱 MÓVIL: grid-cols-2 exacto para 2 columnas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-black">
             
-            {productosMostrar.length > 0 ? (
+            {!isLoaded ? (
+               <div className="col-span-2 md:col-span-4 bg-white py-24 text-center">
+                 <p className="text-black text-[10px] md:text-xs tracking-widest uppercase animate-pulse">Sincronizando Colección...</p>
+               </div>
+            ) : productosMostrar.length > 0 ? (
               productosMostrar.map((prod) => (
                 <div key={prod.id} className="group bg-white flex flex-col relative">
 
-                  {/* IMAGEN (Aspecto 2/3) */}
+                  {/* 📐 IMAGEN (Aspecto 2/3 Exacto) */}
                   <div className="relative w-full aspect-[2/3] bg-[#f6f6f6] overflow-hidden">
                     
-                    {/* VISTA MÓVIL: Swiper táctil con bolitas negras */}
+                    {/* VISTA MÓVIL: Swiper táctil */}
                     <div className="md:hidden w-full h-full">
                       <Swiper
                         pagination={{ dynamicBullets: true }}
                         modules={[Pagination]}
                         className="w-full h-full"
                         style={{
-                          "--swiper-pagination-color": "#000",
-                          "--swiper-pagination-bullet-inactive-color": "#000",
-                          "--swiper-pagination-bullet-inactive-opacity": "0.2",
+                          "--swiper-pagination-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-color": "#000000",
+                          "--swiper-pagination-bullet-inactive-opacity": "0.3",
                           "--swiper-pagination-bullet-size": "5px"
                         } as React.CSSProperties}
                       >
-                        {prod.imagenes.map((img, index) => (
+                        {prod.imagenes.map((img: string, index: number) => (
                           <SwiperSlide key={index}>
                             <Link href={`/producto/${prod.id}`}>
                               <img src={img} alt={`${prod.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
@@ -196,12 +262,21 @@ export default function NinaPage() {
                         alt={prod.nombre}
                         className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
                       />
-                      <img 
-                        src={prod.imagenes[1]} 
-                        alt={`${prod.nombre} hover`}
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      />
+                      {prod.imagenes[1] && (
+                        <img 
+                          src={prod.imagenes[1]} 
+                          alt={`${prod.nombre} hover`}
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                        />
+                      )}
                     </Link>
+
+                    {/* ETIQUETA DE OFERTA */}
+                    {prod.enRebaja && (
+                       <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-2 py-1 text-[8px] md:text-[9px] font-bold uppercase tracking-widest">
+                         OFERTA
+                       </div>
+                    )}
 
                     {/* FAVORITO */}
                     <button className="absolute top-3 right-3 z-20 text-black hover:text-gray-400 transition bg-white/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100">
@@ -213,10 +288,17 @@ export default function NinaPage() {
 
                   {/* INFORMACIÓN */}
                   <Link href={`/producto/${prod.id}`} className="w-full text-left px-3 py-4 flex flex-col">
-                    <p className="text-gray-500 text-[10px] md:text-xs tracking-widest mb-1">
-                      ${prod.precio.toLocaleString('es-MX')} MXN
-                    </p>
-                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase">
+                    <div className="flex gap-2 items-center mb-1">
+                      {prod.enRebaja && (
+                        <p className="text-gray-400 text-[9px] line-through">
+                          ${prod.precioOriginal.toLocaleString('es-MX')}
+                        </p>
+                      )}
+                      <p className={`text-[10px] md:text-xs tracking-widest ${prod.enRebaja ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                        ${prod.precio.toLocaleString('es-MX')} MXN
+                      </p>
+                    </div>
+                    <h3 className="text-black font-medium text-[11px] md:text-xs tracking-wide uppercase truncate">
                       {prod.nombre}
                     </h3>
                   </Link>
@@ -224,10 +306,10 @@ export default function NinaPage() {
                 </div>
               ))
             ) : (
-              <div className="col-span-2 md:col-span-4 bg-white py-20 text-center flex flex-col items-center">
-                <p className="text-black text-xs md:text-sm tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
-                <button onClick={limpiarFiltros} className="border-b border-black text-black text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
-                  Ver todos los productos
+              <div className="col-span-2 md:col-span-4 bg-white py-24 text-center flex flex-col items-center">
+                <p className="text-black text-[10px] md:text-xs tracking-widest uppercase mb-4">No hay productos que coincidan con tu búsqueda.</p>
+                <button onClick={limpiarFiltros} className="border-b border-black text-black text-[10px] md:text-xs font-bold uppercase tracking-widest pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
+                  Limpiar Filtros
                 </button>
               </div>
             )}
