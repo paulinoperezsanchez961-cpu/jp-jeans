@@ -14,7 +14,6 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'hero_1', titulo: 'Hero Principal - Slide 1', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_2', titulo: 'Hero Principal - Slide 2', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'hero_3', titulo: 'Hero Principal - Slide 3', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
-    // 🚨 CARRUSEL VERTICAL AHORA ES UNA LISTA DINÁMICA
     { id: 'c_vert_list', titulo: 'Carrusel Central Vertical', tipo: 'lista', aspect: 2/3 },
     { id: 'home_mujer', titulo: 'Sección Portada: MUJER', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
     { id: 'home_hombre', titulo: 'Sección Portada: HOMBRE', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 },
@@ -56,7 +55,6 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
   nino: [ { id: 'nino', titulo: 'Hero Niño', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
   rebajas: [ { id: 'rebajas', titulo: 'Hero Rebajas', tipo: 'hero', aspectDesktop: 16/9, aspectMobile: 9/16 } ],
   complementos: [
-    // 🚨 FOOTER AHORA ES UNA LISTA DINÁMICA INFINITA
     { id: 'footer_list', titulo: 'Carrusel Horizontal (Footer)', tipo: 'lista', aspect: 16/9 },
   ]
 };
@@ -111,7 +109,9 @@ export default function AdminDashboard() {
   const getImgUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return BASE_URL.replace('/api', '') + path;
+    // Evitamos dobles slashes en caso de que la ruta venga chueca
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return BASE_URL.replace('/api', '') + cleanPath;
   };
 
   const login = (e: React.FormEvent) => {
@@ -151,7 +151,6 @@ export default function AdminDashboard() {
       const [, seccionId, dispositivo] = campoDestino.split('|');
       await guardarBannerEnCerebro(seccionId, dispositivo, imagenRecortadaBase64);
     }
-    // 🚨 LÓGICA DE SUBIDA PARA LISTAS DINÁMICAS
     else if (campoDestino.startsWith('banner_lista|')) {
       const [, seccionId, indexStr] = campoDestino.split('|');
       const index = parseInt(indexStr);
@@ -207,7 +206,6 @@ export default function AdminDashboard() {
     finally { setCargando(false); }
   };
 
-  // 🚨 LÓGICA PARA AGREGAR O QUITAR ESPACIOS A LA LISTA
   const manejarLista = async (idSeccion: string, accion: 'add' | 'remove', index?: number) => {
     let listaActual = Array.isArray(bannersData[idSeccion]) ? [...bannersData[idSeccion]] : [];
     
@@ -230,9 +228,6 @@ export default function AdminDashboard() {
     finally { setCargando(false); }
   };
 
-  // ==========================================
-  // FUNCIONES DEL CATÁLOGO RESTAURADAS
-  // ==========================================
   const publicarProductoWeb = async () => {
     if (!prodSeleccionadoId || !nombreWeb) { alert("Selecciona un producto y ponle nombre comercial."); return; }
     setCargando(true);
@@ -268,7 +263,7 @@ export default function AdminDashboard() {
     setCargando(true);
     try {
       const formData = new FormData();
-      formData.append('estado_web', '0'); // Enviamos la orden de ocultar
+      formData.append('estado_web', '0'); 
       
       const res = await fetch(`${BASE_URL}/oficina/publicar-web/${id}`, { method: 'PUT', body: formData });
       const data = await res.json();
@@ -345,9 +340,6 @@ export default function AdminDashboard() {
 
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           
-          {/* ========================================== */}
-          {/* MÓDULO: ESCAPARATE ULTRA DINÁMICO */}
-          {/* ========================================== */}
           {menuActivo === 'banners' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
@@ -388,7 +380,6 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     ) : item.tipo === 'lista' ? (
-                      // 🚨 INTERFAZ DE LISTA DINÁMICA INFINITA
                       <div className="space-y-4">
                         <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                           <h4 className="font-bold text-[11px] uppercase tracking-widest">{item.titulo}</h4>
@@ -566,8 +557,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* 🚨 SIMULADOR MÓVIL OPTIMIZADO PARA NO VERSE COMPRIMIDO */}
       <div className="hidden md:flex w-[55%] h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-hidden relative items-center justify-center">
-        <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-[375px] h-[812px]' : 'w-full h-full'} bg-white rounded-2xl shadow-2xl overflow-hidden border-[8px] border-black relative`}>
+        <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-full max-w-[420px] h-[95%]' : 'w-full h-full'} bg-white rounded-2xl shadow-2xl overflow-hidden border-[8px] border-black relative`}>
           <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
           {simuladorModo === 'mobile' && (<div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-xl"></div></div>)}
         </div>
