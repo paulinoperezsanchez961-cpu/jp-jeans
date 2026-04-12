@@ -364,7 +364,7 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-[11px] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{item.titulo}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex flex-col items-center gap-2">
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">PC {item.aspectDesktop === 9/16 ? '(Vertical)' : '(Horizontal)'}</span>
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">PC (Horizontal)</span>
                             <div style={{ aspectRatio: item.aspectDesktop || 16/9 }} className="w-full max-w-[200px] bg-gray-50 border border-dashed border-gray-300 relative overflow-hidden group">
                                {bannersData[item.id]?.d ? <img src={getImgUrl(bannersData[item.id].d)} className="w-full h-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-[8px] text-gray-400">Vacío</span>}
                                <button disabled={cargando} onClick={() => iniciarCargaFoto(`banner|${item.id}|d`, item.aspectDesktop || 16/9)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[8px] uppercase font-bold transition-all">Cambiar</button>
@@ -425,9 +425,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ========================================== */}
-          {/* MÓDULO: ENRIQUECIMIENTO (PRODUCTOS) */}
-          {/* ========================================== */}
           {menuActivo === 'productos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Enriquecimiento de Catálogo</h3>
@@ -448,7 +445,6 @@ export default function AdminDashboard() {
                   <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Redactar descripción de lujo..." className="w-full border p-3 text-xs h-24 outline-none focus:border-black"></textarea>
                   
                   <div className="flex gap-4">
-                      {/* 1. CATEGORÍA (Género) */}
                       <select value={categoria} onChange={e => setCategoria(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Categoría</option>
                         <option value="Hombre">Hombre</option>
@@ -457,7 +453,6 @@ export default function AdminDashboard() {
                         <option value="Niño">Niño</option>
                       </select>
                       
-                      {/* 2. TIPO DE PRENDA */}
                       <select value={tipo} onChange={e => setTipo(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Tipo de Prenda</option>
                         <option value="Jeans">Jeans</option>
@@ -470,7 +465,6 @@ export default function AdminDashboard() {
                         <option value="Sudadera">Sudadera</option>
                       </select>
 
-                      {/* 3. CORTE */}
                       <select value={corte} onChange={e => setCorte(e.target.value)} className="border p-3 text-xs w-full outline-none">
                         <option value="">Corte / Ajuste</option>
                         <optgroup label="Hombre">
@@ -514,9 +508,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ========================================== */}
-          {/* MÓDULO: GESTIÓN WEB (CONTROL DE DAÑOS) */}
-          {/* ========================================== */}
           {menuActivo === 'gestion' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
@@ -541,9 +532,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ========================================== */}
-          {/* MÓDULO: TEXTOS EN VIVO */}
-          {/* ========================================== */}
           {menuActivo === 'textos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Modificador de Textos (En Vivo)</h3>
@@ -557,11 +545,16 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 🚨 SIMULADOR MÓVIL OPTIMIZADO PARA NO VERSE COMPRIMIDO */}
-      <div className="hidden md:flex w-[55%] h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-hidden relative items-center justify-center">
-        <div className={`transition-all duration-500 ease-in-out ${simuladorModo === 'mobile' ? 'w-full max-w-[420px] h-[95%]' : 'w-full h-full'} bg-white rounded-2xl shadow-2xl overflow-hidden border-[8px] border-black relative`}>
+      {/* 🚨 SIMULADOR MÓVIL BLINDADO CONTRA APLASTAMIENTOS (FLEXBOX MASTER) */}
+      <div className="hidden md:flex flex-1 h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-y-auto items-center">
+        <div 
+          className={`transition-all duration-500 ease-in-out bg-white overflow-hidden relative my-auto
+          ${simuladorModo === 'mobile' 
+            ? 'w-[375px] min-w-[375px] h-[812px] min-h-[812px] shrink-0 rounded-[2.5rem] border-[12px] border-black shadow-[0_0_50px_rgba(0,0,0,0.2)]' 
+            : 'w-full h-full rounded-2xl shadow-2xl border-[6px] border-black'}`}
+        >
           <iframe ref={iframeRef} src="/?preview=true" className="w-full h-full border-none" title="Simulador JP Jeans" />
-          {simuladorModo === 'mobile' && (<div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-xl"></div></div>)}
+          {simuladorModo === 'mobile' && (<div className="absolute top-0 inset-x-0 h-6 flex justify-center bg-transparent pointer-events-none"><div className="w-32 h-6 bg-black rounded-b-2xl"></div></div>)}
         </div>
       </div>
     </div>
