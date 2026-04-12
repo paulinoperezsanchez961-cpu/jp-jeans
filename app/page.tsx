@@ -29,16 +29,10 @@ const defaultCarrusel = [
 ];
 
 export default function Home() {
-  // ==============================================================================
-  // ⚡ ESTADOS DINÁMICOS
-  // ==============================================================================
   const [imgs, setImgs] = useState(defaultImgs);
   const [images, setImages] = useState(defaultCarrusel);
   const [showPromo, setShowPromo] = useState(false);
 
-  // ==============================================================================
-  // 🧠 CONEXIÓN A HOSTINGER (Sincronización de imágenes web)
-  // ==============================================================================
   useEffect(() => {
     const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
     
@@ -48,19 +42,12 @@ export default function Home() {
         if (data.exito && data.banners) {
           const b = data.banners;
           
-          // 🚨 LÓGICA AUTO-SANADORA DE URLS (Tu Solución Nativa)
           const getImg = (path: string | undefined, fallback: string) => {
             if (!path) return fallback;
             if (path.startsWith('http')) return path;
             
-            // Limpiamos cualquier rastro de código sucio de intentos anteriores
             let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
-            
-            // Si tiene el ?f= de Nginx, lo cortamos para que quede solo /uploads/nombre.jpg
-            if (cleanPath.includes('?f=')) {
-                cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
-            }
-            
+            if (cleanPath.includes('?f=')) cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
             cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
             return `${API_DOMAIN}${cleanPath}`;
           };
@@ -73,7 +60,6 @@ export default function Home() {
             rebajas: { d: getImg(b.home_rebajas?.d, prev.rebajas.d), m: getImg(b.home_rebajas?.m, prev.rebajas.m) }
           }));
 
-          // 🚨 CARGA DE LA LISTA DINÁMICA DEL CARRUSEL VERTICAL
           let carruselDinamico: string[] = [];
           if (Array.isArray(b.c_vert_list) && b.c_vert_list.length > 0) {
             carruselDinamico = b.c_vert_list.map((img: any) => getImg(img?.d, '')).filter(Boolean) as string[];
@@ -81,7 +67,6 @@ export default function Home() {
           
           let finalImages = carruselDinamico.length > 0 ? carruselDinamico : defaultCarrusel;
           
-          // Clonamos si hay menos de 3 para que el carrusel infinito no se rompa
           if (finalImages.length > 0 && finalImages.length < 3) {
             finalImages = [...finalImages, ...finalImages, ...finalImages];
           }
@@ -91,7 +76,6 @@ export default function Home() {
       .catch(console.error);
   }, []);
 
-  // Parallax Configurado
   const refNovedades = useRef(null);
   const { scrollYProgress: scrollNovedades } = useScroll({ target: refNovedades, offset: ["start center", "end end"] });
   const yNovedades = useTransform(scrollNovedades, [0, 1], ["-50vh", "0vh"]); 
@@ -101,10 +85,8 @@ export default function Home() {
   const yKids = useTransform(scrollKids, [0, 1], ["-50vh", "0vh"]);
 
   useEffect(() => {
-    // Temporizador Carrusel
     const timer = setInterval(() => setImages((prev) => [...prev.slice(1), prev[0]]), 3000);
     
-    // Temporizador PopUp Clerk (3 segundos)
     const hasSeenPromo = localStorage.getItem('jpjeans_promo_cerrada');
     if (!hasSeenPromo) {
       const promoTimer = setTimeout(() => setShowPromo(true), 3000);
@@ -119,7 +101,7 @@ export default function Home() {
   return (
     <main className="bg-black min-h-screen w-full overflow-hidden text-white relative">
       
-      {/* POPUP DE 30% DE DESCUENTO CLERK */}
+      {/* POPUP DE DESCUENTO */}
       <AnimatePresence>
         {showPromo && (
           <motion.div initial={{ opacity: 0, y: 50, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.95 }} transition={{ duration: 0.5, ease: "easeOut" }} className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[120] w-[calc(100%-3rem)] md:w-[340px] bg-[#0a0a0a] border border-white/10 p-6 shadow-2xl">
@@ -134,10 +116,9 @@ export default function Home() {
       {/* 1. HERO PRINCIPAL */}
       <div className="w-full relative mt-16 md:mt-0 border-b border-white/10"><HeroBanner /></div>
 
-      {/* 2. NOVEDADES HOMBRE Y MUJER */}
-      <section ref={refNovedades} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
-        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
-        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
+      {/* 2. NOVEDADES HOMBRE Y MUJER (Proporción Matemática Perfecta 2:3 Móvil / 3:4 PC) */}
+      <section ref={refNovedades} className="w-full flex flex-col md:flex-row border-b border-white/10 relative">
+        <div className="w-full aspect-[2/3] md:w-1/2 md:aspect-[3/4] relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.m})` }} />
           <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
@@ -151,8 +132,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
-        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
+        <div className="w-full aspect-[2/3] md:w-1/2 md:aspect-[3/4] relative overflow-hidden group bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.mujer.m})` }} />
           <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-black/40" />
@@ -183,10 +163,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. SPLIT SCREEN: NIÑA Y NIÑO */}
-      <section ref={refKids} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
-        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
-        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
+      {/* 4. SPLIT SCREEN: NIÑA Y NIÑO (Proporción Matemática Perfecta 2:3 Móvil / 3:4 PC) */}
+      <section ref={refKids} className="w-full flex flex-col md:flex-row border-b border-white/10 relative">
+        <div className="w-full aspect-[2/3] md:w-1/2 md:aspect-[3/4] relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
@@ -200,8 +179,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* 💡 AQUI SUBIMOS DE 75vh a 80vh */}
-        <div className="w-full h-[80vh] md:h-full md:w-1/2 relative overflow-hidden group bg-black">
+        <div className="w-full aspect-[2/3] md:w-1/2 md:aspect-[3/4] relative overflow-hidden group bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nino.d})` }} />
           <div className="md:hidden absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nino.m})` }} />
           <div className="absolute inset-0 bg-black/30" />
@@ -216,8 +194,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. REBAJAS */}
-      <section className="w-full relative h-[85vh] md:h-screen bg-black overflow-hidden border-b border-white/10">
+      {/* 5. REBAJAS (Proporción Matemática Perfecta 9:16 Móvil / 16:9 PC) */}
+      <section className="w-full relative aspect-[9/16] md:aspect-[16/9] bg-black overflow-hidden border-b border-white/10">
         <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105" style={{ backgroundImage: `url(${imgs.rebajas.d})` }} />
         <div className="md:hidden absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${imgs.rebajas.m})` }} />
         <div className="absolute inset-0 bg-black/20" />
