@@ -106,12 +106,12 @@ export default function AdminDashboard() {
       .catch(console.error);
   };
 
+  // 🚨 EL AUTO-SANADOR TAMBIÉN PARA EL ADMIN
   const getImgUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    // Evitamos dobles slashes en caso de que la ruta venga chueca
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return BASE_URL.replace('/api', '') + cleanPath;
+    const filename = path.includes('?f=') ? path.split('?f=')[1] : path.split('/').pop();
+    return `${BASE_URL.replace('/api', '')}/api/imagen?f=${filename}`;
   };
 
   const login = (e: React.FormEvent) => {
@@ -196,9 +196,7 @@ export default function AdminDashboard() {
       const response = await fetch(`${BASE_URL}/oficina/storefront/draft`, { method: 'POST', body: fd });
       const data = await response.json();
       
-      if (!data.exito) {
-        alert("❌ Error en el Servidor (Hostinger): " + (data.error || "Fallo desconocido."));
-      }
+      if (!data.exito) alert("❌ Error en el Servidor: " + (data.error || "Fallo desconocido."));
 
       cargarBanners(); 
       if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
@@ -272,14 +270,8 @@ export default function AdminDashboard() {
         alert("✅ Producto ocultado de la web exitosamente.");
         cargarInventario();
         if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
-      } else {
-        alert("❌ Error: " + data.error);
-      }
-    } catch (e) {
-      alert("Error de conexión con el servidor");
-    } finally {
-      setCargando(false);
-    }
+      } else { alert("❌ Error: " + data.error); }
+    } catch (e) { alert("Error de conexión con el servidor"); } finally { setCargando(false); }
   };
 
   const publicarBannersEnVivo = async () => {
@@ -545,7 +537,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 🚨 SIMULADOR MÓVIL BLINDADO CONTRA APLASTAMIENTOS (FLEXBOX MASTER) */}
       <div className="hidden md:flex flex-1 h-full bg-[#e5e5e5] p-6 lg:p-10 flex-col border-l border-black overflow-y-auto items-center">
         <div 
           className={`transition-all duration-500 ease-in-out bg-white overflow-hidden relative my-auto
