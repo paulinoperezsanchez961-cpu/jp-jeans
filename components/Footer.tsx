@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 const BASE_URL = 'https://api.jpjeansvip.com/api';
+// 🚨 Dominio puro para las imágenes estáticas de la carpeta public
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
 const defaultFooterImages = [
   'https://images.unsplash.com/photo-1618886487325-f82764b6ba37?q=80&w=1600&auto=format&fit=crop',
@@ -25,12 +27,21 @@ export default function Footer() {
         if (data.exito && data.banners) {
           const b = data.banners;
           
-          // 🚨 EL AUTO-SANADOR PARA EL FOOTER
+          // 🚨 LÓGICA AUTO-SANADORA DE URLS (Tu Solución Nativa)
           const getImg = (path: string | undefined) => {
             if (!path || path.trim() === '') return null;
             if (path.startsWith('http')) return path;
-            const filename = path.includes('?f=') ? path.split('?f=')[1] : path.split('/').pop();
-            return `${BASE_URL.replace('/api', '')}/api/imagen?f=${filename}`;
+            
+            // Limpiamos cualquier rastro de código sucio de intentos anteriores
+            let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+            
+            // Si tiene el ?f= de Nginx, lo cortamos para que quede solo /uploads/nombre.jpg
+            if (cleanPath.includes('?f=')) {
+                cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
+            }
+            
+            cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+            return `${API_DOMAIN}${cleanPath}`;
           };
           
           const dynamicImages = Array.isArray(b.footer_list) 

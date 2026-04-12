@@ -8,7 +8,12 @@ import Footer from "@/components/Footer";
 import { SignUpButton } from "@clerk/nextjs";
 
 const BASE_URL = 'https://api.jpjeansvip.com/api';
+// 🚨 Dominio puro para las imágenes estáticas de la carpeta public
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
+// ==============================================================================
+// 🧠 IMÁGENES DE RESPALDO (Por si apenas está cargando el servidor)
+// ==============================================================================
 const defaultImgs = {
   hombre: { d: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1600&auto=format&fit=crop', m: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1000&h=1400&auto=format&fit=crop' },
   mujer: { d: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1600&auto=format&fit=crop', m: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&h=1400&auto=format&fit=crop' },
@@ -24,10 +29,16 @@ const defaultCarrusel = [
 ];
 
 export default function Home() {
+  // ==============================================================================
+  // ⚡ ESTADOS DINÁMICOS
+  // ==============================================================================
   const [imgs, setImgs] = useState(defaultImgs);
   const [images, setImages] = useState(defaultCarrusel);
   const [showPromo, setShowPromo] = useState(false);
 
+  // ==============================================================================
+  // 🧠 CONEXIÓN A HOSTINGER (Sincronización de imágenes web)
+  // ==============================================================================
   useEffect(() => {
     const isPreview = typeof window !== 'undefined' && window.location.search.includes('preview=true');
     
@@ -37,12 +48,21 @@ export default function Home() {
         if (data.exito && data.banners) {
           const b = data.banners;
           
-          // 🚨 EL AUTO-SANADOR DE URLS: Revive fotos viejas y nuevas instantáneamente
+          // 🚨 LÓGICA AUTO-SANADORA DE URLS (Tu Solución Nativa)
           const getImg = (path: string | undefined, fallback: string) => {
             if (!path) return fallback;
             if (path.startsWith('http')) return path;
-            const filename = path.includes('?f=') ? path.split('?f=')[1] : path.split('/').pop();
-            return `${BASE_URL.replace('/api', '')}/api/imagen?f=${filename}`;
+            
+            // Limpiamos cualquier rastro de código sucio de intentos anteriores
+            let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+            
+            // Si tiene el ?f= de Nginx, lo cortamos para que quede solo /uploads/nombre.jpg
+            if (cleanPath.includes('?f=')) {
+                cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
+            }
+            
+            cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+            return `${API_DOMAIN}${cleanPath}`;
           };
           
           setImgs(prev => ({
@@ -53,18 +73,25 @@ export default function Home() {
             rebajas: { d: getImg(b.home_rebajas?.d, prev.rebajas.d), m: getImg(b.home_rebajas?.m, prev.rebajas.m) }
           }));
 
+          // 🚨 CARGA DE LA LISTA DINÁMICA DEL CARRUSEL VERTICAL
           let carruselDinamico: string[] = [];
           if (Array.isArray(b.c_vert_list) && b.c_vert_list.length > 0) {
             carruselDinamico = b.c_vert_list.map((img: any) => getImg(img?.d, '')).filter(Boolean) as string[];
           }
+          
           let finalImages = carruselDinamico.length > 0 ? carruselDinamico : defaultCarrusel;
-          if (finalImages.length > 0 && finalImages.length < 3) finalImages = [...finalImages, ...finalImages, ...finalImages];
+          
+          // Clonamos si hay menos de 3 para que el carrusel infinito no se rompa
+          if (finalImages.length > 0 && finalImages.length < 3) {
+            finalImages = [...finalImages, ...finalImages, ...finalImages];
+          }
           setImages(finalImages);
         }
       })
       .catch(console.error);
   }, []);
 
+  // Parallax Configurado
   const refNovedades = useRef(null);
   const { scrollYProgress: scrollNovedades } = useScroll({ target: refNovedades, offset: ["start center", "end end"] });
   const yNovedades = useTransform(scrollNovedades, [0, 1], ["-50vh", "0vh"]); 
@@ -74,12 +101,16 @@ export default function Home() {
   const yKids = useTransform(scrollKids, [0, 1], ["-50vh", "0vh"]);
 
   useEffect(() => {
+    // Temporizador Carrusel
     const timer = setInterval(() => setImages((prev) => [...prev.slice(1), prev[0]]), 3000);
+    
+    // Temporizador PopUp Clerk (3 segundos)
     const hasSeenPromo = localStorage.getItem('jpjeans_promo_cerrada');
     if (!hasSeenPromo) {
       const promoTimer = setTimeout(() => setShowPromo(true), 3000);
       return () => { clearInterval(timer); clearTimeout(promoTimer); };
     }
+    
     return () => clearInterval(timer);
   }, []);
 
@@ -87,6 +118,8 @@ export default function Home() {
 
   return (
     <main className="bg-black min-h-screen w-full overflow-hidden text-white relative">
+      
+      {/* POPUP DE 30% DE DESCUENTO CLERK */}
       <AnimatePresence>
         {showPromo && (
           <motion.div initial={{ opacity: 0, y: 50, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.95 }} transition={{ duration: 0.5, ease: "easeOut" }} className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[120] w-[calc(100%-3rem)] md:w-[340px] bg-[#0a0a0a] border border-white/10 p-6 shadow-2xl">
@@ -98,8 +131,10 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* 1. HERO PRINCIPAL */}
       <div className="w-full relative mt-16 md:mt-0 border-b border-white/10"><HeroBanner /></div>
 
+      {/* 2. NOVEDADES HOMBRE Y MUJER */}
       <section ref={refNovedades} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
         <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.hombre.d})` }} />
@@ -130,6 +165,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 3. CARRUSEL VERTICAL CENTRAL */}
       <section className="w-full h-[70vh] md:h-screen bg-black flex flex-col justify-center border-b border-white/10 relative overflow-hidden">
         <div className="w-full h-full relative flex items-center justify-center">
           <AnimatePresence mode="popLayout">
@@ -145,6 +181,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 4. SPLIT SCREEN: NIÑA Y NIÑO */}
       <section ref={refKids} className="w-full flex flex-col md:flex-row h-auto md:h-[140vh] border-b border-white/10 relative">
         <div className="w-full h-[75vh] md:h-full md:w-1/2 relative overflow-hidden group border-b md:border-b-0 md:border-r border-white/10 bg-black">
           <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${imgs.nina.d})` }} />
@@ -175,6 +212,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 5. REBAJAS */}
       <section className="w-full relative h-[85vh] md:h-screen bg-black overflow-hidden border-b border-white/10">
         <div className="hidden md:block absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105" style={{ backgroundImage: `url(${imgs.rebajas.d})` }} />
         <div className="md:hidden absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${imgs.rebajas.m})` }} />

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 const BASE_URL = 'https://api.jpjeansvip.com/api';
+// 🚨 Dominio puro para las imágenes estáticas de la carpeta public
+const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
 // ==============================================================================
 // 🧠 RED DE SEGURIDAD (Fallbacks)
@@ -43,9 +45,22 @@ export default function HeroBanner() {
         if (data.exito && data.banners) {
           const b = data.banners;
           
-          // Lógica inteligente: Si hay foto del backend y no está vacía la usa, si no, mantiene la de seguridad
-          const getImg = (path: string | undefined, fallback: string) => 
-            (path && path.trim() !== '') ? (path.startsWith('http') ? path : BASE_URL.replace('/api', '') + path) : fallback;
+          // 🚨 LÓGICA AUTO-SANADORA DE URLS (Tu Solución Nativa)
+          const getImg = (path: string | undefined, fallback: string) => {
+            if (!path || path.trim() === '') return fallback;
+            if (path.startsWith('http')) return path;
+            
+            // Limpiamos cualquier rastro de código sucio de intentos anteriores
+            let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+            
+            // Si tiene el ?f= de Nginx, lo cortamos para que quede solo /uploads/nombre.jpg
+            if (cleanPath.includes('?f=')) {
+                cleanPath = `/uploads/${cleanPath.split('?f=')[1]}`;
+            }
+            
+            cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+            return `${API_DOMAIN}${cleanPath}`;
+          };
           
           setSlides([
             { 
