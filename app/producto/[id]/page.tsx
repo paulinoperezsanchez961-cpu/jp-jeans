@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
-import { useParams } from 'next/navigation'; // 🚨 EL SALVAVIDAS: Hook nativo de Next.js
+import { useParams } from 'next/navigation'; 
 
-// Importaciones de Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 // @ts-ignore
@@ -20,50 +19,69 @@ const API_DOMAIN = 'https://api.jpjeansvip.com';
 export default function ProductPage() {
   const { addToCart } = useCart();
   
-  // 🚨 EXTRAEMOS EL ID DE FORMA SEGURA Y ASÍNCRONA
   const params = useParams();
   const idParam = params?.id as string;
   
-  // ESTADOS DEL PRODUCTO REAL
   const [producto, setProducto] = useState<any>(null);
   const [relacionados, setRelacionados] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // ESTADOS DE LA INTERFAZ
   const [tallaSeleccionada, setTallaSeleccionada] = useState<string | null>(null);
   const [errorTalla, setErrorTalla] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // 🧠 SANADOR DE IMÁGENES UNIVERSAL
   const getImg = (path: string | undefined, fallback: string = 'https://via.placeholder.com/400x600?text=JP+Jeans') => {
-    if (!path) return fallback;
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
+    if (!path || typeof path !== 'string' || path.trim() === '') return fallback;
+    const cleanInput = path.trim();
+    if (cleanInput.includes('http')) return cleanInput; 
+    
+    let cleanPath = cleanInput.replace('/api/uploads/', '/uploads/').replace('/api/media/', '/uploads/');
     if (cleanPath.includes('?f=')) cleanPath = '/uploads/' + cleanPath.split('?f=')[1];
     return `${API_DOMAIN}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
   };
 
   useEffect(() => {
-    // 🚨 BLOQUEO DE SEGURIDAD: Si el ID todavía no llega de la URL, no hacemos nada y esperamos.
     if (!idParam) return;
 
-    // LLAMAMOS AL CEREBRO PARA TRAER EL CATÁLOGO Y BUSCAR ESTE ID EXACTO
     fetch(`${BASE_URL}/web/catalogo`)
       .then(res => res.json())
       .then(data => {
         if (data.exito) {
-          // Usamos el idParam que ya está 100% seguro de existir
           const p = data.productos.find((prod: any) => prod.id.toString() === idParam);
           
           if (p) {
-            // Unimos todas las fotos
             let fotosExtra = [];
             try { if (p.urls_fotos_extra) fotosExtra = JSON.parse(p.urls_fotos_extra); } catch(e){}
             const allImgs = [p.url_foto_principal, ...fotosExtra].filter(Boolean).map((img: string) => getImg(img));
             if(allImgs.length === 0) allImgs.push(getImg(''));
 
             const precioFinal = parseFloat(p.en_rebaja ? p.precio_rebaja : p.precio_venta);
+
+            // 🚨 SISTEMA DE INVENTARIO INTELIGENTE (Nivel Master)
+            // Extraemos el nombre para mostrarlo y la cantidad oculta para saber si está agotado
+            let tallasList: any[] = [{ nombre: 'ÚNICA', stock: 1 }];
+            try {
+              let tallasGuardadas = p.tallas;
+              if (typeof tallasGuardadas === 'string') {
+                tallasGuardadas = JSON.parse(tallasGuardadas);
+              }
+              if (Array.isArray(tallasGuardadas) && tallasGuardadas.length > 0) {
+                tallasList = tallasGuardadas.map((t: any) => {
+                  if (typeof t === 'object' && t !== null) {
+                    return { 
+                      nombre: t.talla || t.nombre, 
+                      stock: t.cantidad !== undefined ? Number(t.cantidad) : 1 
+                    };
+                  }
+                  return { nombre: t, stock: 1 }; // Si solo viene el texto
+                });
+              }
+            } catch (e) {
+              if (typeof p.tallas === 'string' && p.tallas.trim() !== '') {
+                tallasList = [{ nombre: p.tallas, stock: 1 }];
+              }
+            }
 
             setProducto({
               id: p.id,
@@ -75,11 +93,10 @@ export default function ProductPage() {
               precioTexto: `$${precioFinal.toLocaleString('es-MX')} MXN`,
               descripcion: p.descripcion || "Prenda exclusiva JP Jeans. Corte perfecto y materiales de primera calidad.",
               imagenes: allImgs,
-              tallas: p.tallas_array && p.tallas_array.length > 0 ? p.tallas_array : ['ÚNICA'],
+              tallas: tallasList, // Guardamos el objeto inteligente {nombre, stock}
               categoria: p.categoria || 'Colección'
             });
 
-            // OBTENEMOS 4 PRODUCTOS RELACIONADOS AL AZAR
             const otros = data.productos.filter((prod: any) => prod.id.toString() !== idParam);
             const shuffled = otros.sort(() => 0.5 - Math.random()).slice(0, 4);
             const relMapeados = shuffled.map((rp: any) => ({
@@ -93,9 +110,8 @@ export default function ProductPage() {
         }
         setIsLoaded(true);
       }).catch(() => setIsLoaded(true));
-  }, [idParam]); // 🚨 El useEffect se vuelve a ejecutar en cuanto el idParam esté listo
+  }, [idParam]);
 
-  // CONTROLES DEL LIGHTBOX (Galería Pantalla Completa)
   const nextLightboxImage = (e: React.MouseEvent) => {
     e.stopPropagation(); 
     if (lightboxIndex !== null && producto) {
@@ -139,7 +155,6 @@ export default function ProductPage() {
     });
   };
 
-  // PANTALLA DE CARGA
   if (!isLoaded) {
     return (
       <div className="bg-black min-h-screen w-full flex items-center justify-center text-white pt-24">
@@ -148,7 +163,6 @@ export default function ProductPage() {
     );
   }
 
-  // PANTALLA SI NO EXISTE EL PRODUCTO
   if (!producto) {
     return (
       <div className="bg-black min-h-screen w-full flex flex-col items-center justify-center text-white pt-24 text-center px-4">
@@ -165,10 +179,7 @@ export default function ProductPage() {
     <main className="bg-black min-h-screen w-full text-white pt-16 md:pt-24 pb-20">
       <div className="w-full max-w-[1450px] mx-auto px-0 md:px-8 flex flex-col md:flex-row gap-6 md:gap-12">
         
-        {/* COLUMNA IZQUIERDA: IMÁGENES */}
         <div className="w-full md:w-[65%]">
-
-          {/* VISTA MÓVIL: Swiper (Deslizable y más largo) */}
           <div className="md:hidden w-full relative">
             <Swiper
               pagination={{ clickable: true, dynamicBullets: true }}
@@ -187,7 +198,6 @@ export default function ProductPage() {
             </Swiper>
           </div>
 
-          {/* VISTA PC: Cuadrícula original */}
           <div className="hidden md:grid md:grid-cols-2 gap-2 md:gap-4">
             {producto.imagenes.map((img: string, index: number) => (
               <div 
@@ -202,10 +212,8 @@ export default function ProductPage() {
               </div>
             ))}
           </div>
-
         </div>
 
-        {/* COLUMNA DERECHA: INFORMACIÓN ANCLADA */}
         <div className="w-full md:w-[35%] relative mt-2 md:mt-0 px-4 md:px-0">
           <div className="md:sticky md:top-32 space-y-8">
             
@@ -229,7 +237,6 @@ export default function ProductPage() {
                 </button>
               </div>
 
-              {/* LÓGICA INTELIGENTE DE PRECIO/OFERTA */}
               <div className="flex items-center gap-4">
                 {producto.enRebaja && (
                   <span className="font-sans text-lg opacity-50 line-through">
@@ -252,24 +259,32 @@ export default function ProductPage() {
                 </button>
               </div>
               
-              {/* BOTONES DE TALLAS REALES */}
               <div className="grid grid-cols-3 gap-3">
-                {producto.tallas.map((talla: string) => (
-                  <button 
-                    key={talla}
-                    onClick={() => {
-                      setTallaSeleccionada(talla);
-                      setErrorTalla(false);
-                    }}
-                    className={`py-3 font-sans text-xs tracking-widest uppercase transition-all border ${
-                      tallaSeleccionada === talla 
-                        ? 'bg-white text-black border-white' 
-                        : 'bg-transparent text-white border-white/20 hover:border-white'
-                    }`}
-                  >
-                    {talla}
-                  </button>
-                ))}
+                {/* 🚨 AQUÍ SE DIBUJA LA TALLA Y SE BLOQUEA SI ESTÁ AGOTADA */}
+                {producto.tallas.map((t: any, i: number) => {
+                  const isAgotado = t.stock < 1;
+                  const isSelected = tallaSeleccionada === t.nombre;
+                  
+                  return (
+                    <button 
+                      key={i}
+                      disabled={isAgotado}
+                      onClick={() => {
+                        setTallaSeleccionada(t.nombre);
+                        setErrorTalla(false);
+                      }}
+                      className={`py-3 font-sans text-xs tracking-widest uppercase transition-all border ${
+                        isAgotado 
+                          ? 'bg-transparent text-white/20 border-white/10 cursor-not-allowed line-through' // Botón tachado y bloqueado
+                          : isSelected 
+                          ? 'bg-white text-black border-white' 
+                          : 'bg-transparent text-white border-white/20 hover:border-white'
+                      }`}
+                    >
+                      {t.nombre}
+                    </button>
+                  );
+                })}
               </div>
 
               {errorTalla && (
@@ -293,7 +308,6 @@ export default function ProductPage() {
                 {producto.descripcion}
               </p>
 
-              {/* SKU TÉCNICO DESDE BASE DE DATOS */}
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="font-mono text-[11px] tracking-[0.15em] text-white/50 uppercase">
                   IDENTIFICADOR: {producto.sku}
@@ -316,7 +330,6 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* PRODUCTOS RELACIONADOS DINÁMICOS */}
       {relacionados.length > 0 && (
         <section className="w-full max-w-[1450px] mx-auto px-4 md:px-8 mt-24 pt-16 border-t border-white/10">
           <h3 className="font-serif text-2xl md:text-3xl tracking-[0.2em] uppercase mb-10 text-center md:text-left">
@@ -354,7 +367,6 @@ export default function ProductPage() {
         </section>
       )}
 
-      {/* GALERÍA EXPANDIDA A PANTALLA COMPLETA (LIGHTBOX) */}
       <AnimatePresence>
         {lightboxIndex !== null && producto && (
           <motion.div 
