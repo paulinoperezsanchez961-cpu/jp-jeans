@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
+import { useParams } from 'next/navigation'; // 🚨 EL SALVAVIDAS: Hook nativo de Next.js
 
 // Importaciones de Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -16,8 +17,12 @@ import 'swiper/css/pagination';
 const BASE_URL = 'https://api.jpjeansvip.com/api';
 const API_DOMAIN = 'https://api.jpjeansvip.com'; 
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default function ProductPage() {
   const { addToCart } = useCart();
+  
+  // 🚨 EXTRAEMOS EL ID DE FORMA SEGURA Y ASÍNCRONA
+  const params = useParams();
+  const idParam = params?.id as string;
   
   // ESTADOS DEL PRODUCTO REAL
   const [producto, setProducto] = useState<any>(null);
@@ -40,12 +45,16 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
+    // 🚨 BLOQUEO DE SEGURIDAD: Si el ID todavía no llega de la URL, no hacemos nada y esperamos.
+    if (!idParam) return;
+
     // LLAMAMOS AL CEREBRO PARA TRAER EL CATÁLOGO Y BUSCAR ESTE ID EXACTO
     fetch(`${BASE_URL}/web/catalogo`)
       .then(res => res.json())
       .then(data => {
         if (data.exito) {
-          const p = data.productos.find((prod: any) => prod.id.toString() === params.id);
+          // Usamos el idParam que ya está 100% seguro de existir
+          const p = data.productos.find((prod: any) => prod.id.toString() === idParam);
           
           if (p) {
             // Unimos todas las fotos
@@ -71,7 +80,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             });
 
             // OBTENEMOS 4 PRODUCTOS RELACIONADOS AL AZAR
-            const otros = data.productos.filter((prod: any) => prod.id.toString() !== params.id);
+            const otros = data.productos.filter((prod: any) => prod.id.toString() !== idParam);
             const shuffled = otros.sort(() => 0.5 - Math.random()).slice(0, 4);
             const relMapeados = shuffled.map((rp: any) => ({
               id: rp.id,
@@ -84,7 +93,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         }
         setIsLoaded(true);
       }).catch(() => setIsLoaded(true));
-  }, [params.id]);
+  }, [idParam]); // 🚨 El useEffect se vuelve a ejecutar en cuanto el idParam esté listo
 
   // CONTROLES DEL LIGHTBOX (Galería Pantalla Completa)
   const nextLightboxImage = (e: React.MouseEvent) => {
@@ -144,7 +153,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     return (
       <div className="bg-black min-h-screen w-full flex flex-col items-center justify-center text-white pt-24 text-center px-4">
         <h1 className="text-2xl md:text-4xl tracking-widest uppercase mb-4 text-red-600">Prenda no encontrada</h1>
-        <p className="text-xs tracking-widest uppercase mb-8 opacity-70">El artículo que buscas ya no está disponible.</p>
+        <p className="text-xs tracking-widest uppercase mb-8 opacity-70">El artículo que buscas ya no está disponible o el enlace es incorrecto.</p>
         <Link href="/" className="border-b border-white pb-1 text-xs uppercase tracking-widest hover:text-gray-400 transition">
           Volver a la tienda
         </Link>
