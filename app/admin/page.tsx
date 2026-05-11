@@ -85,8 +85,9 @@ export default function AdminDashboard() {
   const [campoDestino, setCampoDestino] = useState<string>('');
   const archivoInputRef = useRef<HTMLInputElement>(null);
 
-  // ESTADOS: Base de Datos
+  // ESTADOS: Base de Datos y Buscador
   const [inventarioCrudo, setInventarioCrudo] = useState<any[]>([]);
+  const [busquedaProdCrudo, setBusquedaProdCrudo] = useState(''); // 🚨 NUEVO ESTADO DEL BUSCADOR
   const [cargando, setCargando] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
@@ -102,11 +103,11 @@ export default function AdminDashboard() {
   const [seccionBannerActiva, setSeccionBannerActiva] = useState<string>('inicio');
   const [bannersData, setBannersData] = useState<any>({});
 
-  // 💡 ESTADOS: Textos Dinámicos
+  // ESTADOS: Textos Dinámicos
   const [textosHombre, setTextosHombre] = useState({ titulo: '', descripcion: '' });
   const [textosMujer, setTextosMujer] = useState({ titulo: '', descripcion: '' });
 
-  // 🚨 ESTADOS: CONTROL DE OFERTAS (NUEVO)
+  // ESTADOS: Control de Ofertas
   const [editandoOferta, setEditandoOferta] = useState<number | null>(null);
   const [precioRebaja, setPrecioRebaja] = useState<string>('');
 
@@ -314,7 +315,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // 🚨 LÓGICA PARA GUARDAR OFERTAS AL CEREBRO DIRECTAMENTE DESDE LA WEB
   const guardarOferta = async (id: number, enRebaja: boolean, precioNuevo: string) => {
     setCargando(true);
     try {
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
         if (data.exito) {
             alert(enRebaja ? "✅ Oferta activada" : "✅ Producto devuelto a precio original");
             setEditandoOferta(null);
-            cargarInventario(); // Recargamos para que se refleje inmediatamente
+            cargarInventario(); 
             if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
         } else {
             alert("❌ Error: " + data.error);
@@ -368,13 +368,34 @@ export default function AdminDashboard() {
     } catch (e) { alert("Error al publicar"); }
   };
 
+  // 🚨 LÓGICA DEL BUSCADOR: Filtramos el inventario
+  const productosCrudosFiltrados = inventarioCrudo.filter(p => 
+    p.nombre.toLowerCase().includes(busquedaProdCrudo.toLowerCase()) || 
+    p.sku.toLowerCase().includes(busquedaProdCrudo.toLowerCase())
+  );
+
   if (!autenticado) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center flex-col px-4 text-white">
         <h1 className="text-3xl font-light tracking-[0.3em] uppercase mb-8">Bóveda JP Jeans</h1>
+        {/* 🚨 PARCHE FACE ID: Atributos añadidos para autocompletar contraseñas */}
         <form onSubmit={login} className="flex flex-col gap-4 w-full max-w-sm">
-          <input type="password" placeholder="CONTRASEÑA DE DIRECCIÓN" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent border-b border-white/20 p-4 text-center tracking-[0.2em] focus:border-white outline-none" />
-          <button type="submit" className="bg-white text-black font-bold tracking-[0.2em] uppercase py-4 mt-4 hover:bg-gray-200">Ingresar al Sistema</button>
+          {/* Este input oculto ayuda a los llaveros como iCloud a entender para qué usuario es la clave */}
+          <input type="text" name="username" id="username" value="admin" autoComplete="username" className="hidden" readOnly />
+          
+          <input 
+            type="password" 
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            placeholder="CONTRASEÑA DE DIRECCIÓN" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            className="w-full bg-transparent border-b border-white/20 p-4 text-center tracking-[0.2em] focus:border-white outline-none" 
+          />
+          <button type="submit" className="bg-white text-black font-bold tracking-[0.2em] uppercase py-4 mt-4 hover:bg-gray-200 transition-colors">
+            Ingresar al Sistema
+          </button>
         </form>
       </div>
     );
@@ -383,7 +404,6 @@ export default function AdminDashboard() {
   const productosEnWeb = inventarioCrudo.filter(p => p.estado_web === 1);
 
   return (
-    // 🚨 AJUSTE MAESTRO DE LAYOUT: Se usa calc(100vh - 5rem) y mt-20 para esquivar el header sin romper el diseño
     <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] mt-16 md:mt-20 w-full bg-white flex overflow-hidden font-sans text-black relative">
       
       {/* COMPONENTE DE RECORTE */}
@@ -555,16 +575,29 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* PESTAÑA 3: CATÁLOGO */}
+          {/* 🚨 PESTAÑA 3: CATÁLOGO CON BUSCADOR */}
           {menuActivo === 'productos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Enriquecimiento de Catálogo</h3>
               
               <div className="bg-white p-6 border border-gray-200 shadow-sm flex flex-col gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Paso 1: Seleccionar Crudo (De Bodega)</span>
-                  <select value={prodSeleccionadoId} onChange={(e) => setProdSeleccionadoId(e.target.value)} className="border p-3 text-xs w-full bg-gray-50 outline-none">
-                      <option value="">Selecciona un artículo crudo...</option>
-                      {inventarioCrudo.map((prod: any) => (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Paso 1: Buscar y Seleccionar (De Bodega)</span>
+                  
+                  {/* 🚨 BARRA DE BÚSQUEDA AÑADIDA */}
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    <input 
+                      type="text" 
+                      placeholder="Buscar por SKU o nombre..." 
+                      value={busquedaProdCrudo}
+                      onChange={(e) => setBusquedaProdCrudo(e.target.value)}
+                      className="w-full border border-gray-300 pl-9 pr-3 py-2 text-xs outline-none focus:border-black bg-white"
+                    />
+                  </div>
+
+                  <select value={prodSeleccionadoId} onChange={(e) => setProdSeleccionadoId(e.target.value)} className="border p-3 text-xs w-full bg-gray-50 outline-none mt-2">
+                      <option value="">Selecciona un artículo...</option>
+                      {productosCrudosFiltrados.map((prod: any) => (
                         <option key={prod.id} value={prod.id}>SKU: {prod.sku} - {prod.nombre} {prod.estado_web === 1 ? '🌐' : ''}</option>
                       ))}
                   </select>
@@ -639,7 +672,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 🚨 PESTAÑA 4: GESTIÓN WEB Y REBAJAS */}
+          {/* PESTAÑA 4: GESTIÓN WEB Y REBAJAS */}
           {menuActivo === 'gestion' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-black">Control de Inventario Web y Ofertas</h3>
