@@ -9,47 +9,59 @@ import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 
 // Tu llave pública de Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+const BASE_URL = 'https://api.jpjeansvip.com/api';
 
 export default function CheckoutPage() {
-  const { cart, getCartTotal } = useCart();
+  const { cart, getCartTotal, clearCart } = useCart();
   
-  // Controles de la página
-  const [paso, setPaso] = useState<1 | 2>(1); // 1 = Envío, 2 = Pago
+  const [paso, setPaso] = useState<1 | 2>(1); 
   const [metodoPago, setMetodoPago] = useState<'tarjeta' | 'oxxo' | 'paypal'>('tarjeta');
 
-  // ESTADO PARA CAPTURAR LOS DATOS DEL CLIENTE (Seguridad y UX)
   const [datosEnvio, setDatosEnvio] = useState({
-    email: '',
-    nombre: '',
-    telefono: '',
-    calle: '',
-    numero: '',
-    colonia: '',
-    cp: '',
-    ciudad: '',
-    estado: ''
+    email: '', nombre: '', telefono: '', calle: '', numero: '', colonia: '', cp: '', ciudad: '', estado: ''
   });
 
-  // ESTADOS DEL SISTEMA DE DESCUENTOS UNIFICADO
+  // ESTADOS DEL SISTEMA DE DESCUENTOS REAL (Conectado a la BD)
   const [codigoInput, setCodigoInput] = useState('');
   const [codigoAplicado, setCodigoAplicado] = useState<string | null>(null);
-  const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
+  const [descuentoPorPieza, setDescuentoPorPieza] = useState(0);
   const [errorCodigo, setErrorCodigo] = useState('');
 
-  // ESTADOS DE SEGURIDAD PARA STRIPE
+  // ESTADOS DE SEGURIDAD PARA STRIPE Y OXXO
   const [clientSecret, setClientSecret] = useState('');
-  
-  // ESTADOS PARA MERCADO PAGO (OXXO)
   const [ticketOxxo, setTicketOxxo] = useState('');
   const [cargandoOxxo, setCargandoOxxo] = useState(false);
 
-  // LÓGICA DE CÁLCULO DE PRECIOS
+  // LÓGICA MATEMÁTICA DE PRECIOS
   const totalOriginal = getCartTotal();
-  const montoDescuento = (totalOriginal * descuentoPorcentaje) / 100;
-  const totalFinal = totalOriginal - montoDescuento;
+  const totalPiezas = cart.reduce((acc, item) => acc + item.cantidad, 0);
+  const montoDescuento = descuentoPorPieza * totalPiezas;
+  const totalFinal = Math.max(0, totalOriginal - montoDescuento);
 
-  // Función para aplicar código (Simulación Frontend)
-  const aplicarCodigo = () => {
+  // 🚨 FUNCIÓN PARA GUARDAR EL PEDIDO EN BODEGA Y POS TRAS PAGAR
+  const registrarPedidoFinal = async (metodo: string, idTransaccion: string) => {
+    try {
+      await fetch(`${BASE_URL}/web/crear-pedido`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          carrito: cart,
+          datosEnvio,
+          metodo_pago: metodo,
+          id_transaccion: idTransaccion,
+          total: totalFinal,
+          codigo_creador: codigoAplicado
+        })
+      });
+      clearCart();
+      window.location.href = '/novedades?exito=true'; 
+    } catch (e) {
+      console.error("Error guardando el pedido en el servidor");
+    }
+  };
+
+  // 🚨 VALIDACIÓN REAL DE CUPONES CONTRA LA BASE DE DATOS
+  const aplicarCodigo = async () => {
     setErrorCodigo('');
     const codigoFormateado = codigoInput.trim().toUpperCase();
 
@@ -58,27 +70,28 @@ export default function CheckoutPage() {
       return;
     }
 
-    // SIMULACIÓN: En producción, aquí harías un fetch a tu API para validar el código
-    if (codigoFormateado === 'ZERO30') {
-      setDescuentoPorcentaje(30);
-      setCodigoAplicado(codigoFormateado);
-      setCodigoInput('');
-    } else if (codigoFormateado === 'VIP15') {
-      setDescuentoPorcentaje(15);
-      setCodigoAplicado(codigoFormateado);
-      setCodigoInput('');
-    } else {
-      setErrorCodigo('El código no existe o ha expirado.');
+    try {
+      const res = await fetch(`${BASE_URL}/cupones/validar/${codigoFormateado}`);
+      const data = await res.json();
+
+      if (data.valido) {
+        setDescuentoPorPieza(parseFloat(data.descuento));
+        setCodigoAplicado(codigoFormateado);
+        setCodigoInput('');
+      } else {
+        setErrorCodigo('El código no existe o ha expirado.');
+      }
+    } catch (e) {
+      setErrorCodigo('Error de conexión al validar código.');
     }
   };
 
   const removerCodigo = () => {
     setCodigoAplicado(null);
-    setDescuentoPorcentaje(0);
+    setDescuentoPorPieza(0);
     setErrorCodigo('');
   };
 
-  // Función para actualizar los datos mientras el cliente escribe
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDatosEnvio({ ...datosEnvio, [e.target.name]: e.target.value });
   };
@@ -88,13 +101,11 @@ export default function CheckoutPage() {
     setPaso(2);
   };
 
-  // FUNCIÓN SEGURA STRIPE
   const cargarStripe = async () => {
     try {
       const res = await fetch('/api/pagos/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Enviamos el carrito Y el código de descuento para que el backend lo aplique de forma segura
         body: JSON.stringify({ cart, codigoDescuento: codigoAplicado })
       });
       const data = await res.json();
@@ -108,7 +119,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // FUNCIÓN SEGURA MERCADO PAGO (OXXO)
   const generarTicketOxxo = async () => {
     setCargandoOxxo(true);
     try {
@@ -120,6 +130,7 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (data.ticketUrl) {
         setTicketOxxo(data.ticketUrl);
+        registrarPedidoFinal('OXXO Pendiente', 'Ticket Generado');
       } else {
         alert("Error generando ticket: " + (data.error || "Desconocido"));
       }
@@ -219,7 +230,8 @@ export default function CheckoutPage() {
                     <p className="text-[9px] tracking-widest opacity-50 mb-8 uppercase border-b border-white/10 pb-4">Conexión cifrada a través de Stripe</p>
                     {clientSecret ? (
                       <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
-                        <CheckoutForm clientSecret={clientSecret} />
+                        {/* 🚨 AQUÍ ESTÁ EL TIPO EXACTO QUE ARREGLA EL ERROR */}
+                        <CheckoutForm clientSecret={clientSecret} onPagoExitoso={(id: string) => registrarPedidoFinal('Stripe - Tarjeta Web', id)} />
                       </Elements>
                     ) : (
                       <button onClick={cargarStripe} className="w-full bg-white text-black py-4 text-[10px] font-bold tracking-[0.3em] uppercase hover:bg-gray-200 transition-colors">
@@ -270,6 +282,7 @@ export default function CheckoutPage() {
                              if (actions.order) {
                                const details = await actions.order.capture();
                                alert("Pago verificado y completado por " + details?.payer?.name?.given_name);
+                               registrarPedidoFinal('PayPal Web', details.id || 'N/A');
                              }
                           }}
                         />
@@ -307,7 +320,7 @@ export default function CheckoutPage() {
             <div className="border-t border-white/20 pt-6 pb-6 space-y-4">
               {!codigoAplicado ? (
                 <div>
-                  <label className="text-[9px] tracking-[0.2em] uppercase text-white/50 mb-3 block">¿Tienes un código promocional?</label>
+                  <label className="text-[9px] tracking-[0.2em] uppercase text-white/50 mb-3 block">¿Tienes un código de creador?</label>
                   <div className="flex gap-2">
                     <input 
                       type="text" 
@@ -329,7 +342,7 @@ export default function CheckoutPage() {
                 <div className="bg-white/5 p-4 flex justify-between items-center border border-white/10">
                   <div>
                     <p className="text-[8px] text-green-400 tracking-widest uppercase mb-1">Código Aplicado Exitosamente</p>
-                    <p className="text-[11px] font-bold tracking-[0.2em] uppercase">{codigoAplicado} <span className="font-light text-white/50">(-{descuentoPorcentaje}%)</span></p>
+                    <p className="text-[11px] font-bold tracking-[0.2em] uppercase">{codigoAplicado} <span className="font-light text-white/50">(-${descuentoPorPieza} x pz)</span></p>
                   </div>
                   <button onClick={removerCodigo} className="text-white/40 hover:text-white text-[9px] tracking-widest uppercase transition-colors border-b border-transparent hover:border-white pb-0.5">
                     Quitar
@@ -342,12 +355,12 @@ export default function CheckoutPage() {
             <div className="border-t border-white/20 pt-6 space-y-4">
               <div className="flex justify-between text-[10px] tracking-widest uppercase opacity-70">
                 <span>Subtotal</span>
-                <span className={descuentoPorcentaje > 0 ? "line-through opacity-50" : ""}>
+                <span className={descuentoPorPieza > 0 ? "line-through opacity-50" : ""}>
                   ${totalOriginal.toLocaleString('es-MX')} MXN
                 </span>
               </div>
               
-              {descuentoPorcentaje > 0 && (
+              {descuentoPorPieza > 0 && (
                 <div className="flex justify-between text-[10px] tracking-widest uppercase text-green-400">
                   <span>Descuento ({codigoAplicado})</span>
                   <span>-${montoDescuento.toLocaleString('es-MX')} MXN</span>

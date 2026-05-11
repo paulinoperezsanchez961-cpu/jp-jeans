@@ -1,49 +1,74 @@
 import { NextResponse } from 'next/server';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-// Tu Access Token de Producción
-const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN! });
-const payment = new Payment(client);
-
-// Simulamos tu BD
-const baseDeDatos = [{ id: 'JD-001', precio: 2499.00 }];
+const BASE_URL = 'https://api.jpjeansvip.com/api';
 
 export async function POST(request: Request) {
   try {
-    // 1. Recibimos el carrito, email Y EL CÓDIGO DE DESCUENTO
     const { cart, email, codigoDescuento } = await request.json();
 
-    // 2. Calculamos el total real sumando la base de datos
+    // 1. OBTENEMOS EL CATÁLOGO REAL DEL SERVIDOR
+    const resCatalogo = await fetch(`${BASE_URL}/web/catalogo`);
+    const dataCatalogo = await resCatalogo.json();
+    const catalogoReal = dataCatalogo.productos || [];
+
+    // 2. RECALCULAMOS EL PRECIO SEGURO Y REAL
     let totalReal = 0;
-    cart.forEach((item: any) => {
-      const dbItem = baseDeDatos.find(p => p.id === item.id);
-      if (dbItem) totalReal += dbItem.precio * item.cantidad;
-    });
+    let totalPiezas = 0;
 
-    // 3. APLICAMOS EL DESCUENTO DE MANERA SEGURA EN EL SERVIDOR
-    if (codigoDescuento === 'ZERO30') {
-      totalReal = totalReal * 0.70; // 30% de descuento
-    } else if (codigoDescuento === 'VIP15') {
-      totalReal = totalReal * 0.85; // 15% de descuento
-    }
-
-    // 4. Generamos el ticket de pago en efectivo vía OXXO
-    const response = await payment.create({
-      body: {
-        transaction_amount: Number(totalReal.toFixed(2)), // Redondeamos a 2 decimales por seguridad
-        description: 'Compra en JP Jeans',
-        payment_method_id: 'oxxo', 
-        payer: {
-          email: email,
-        },
+    cart.forEach((itemCliente: any) => {
+      const productoReal = catalogoReal.find((p: any) => p.id === itemCliente.id);
+      if (productoReal) {
+        const precioUsar = productoReal.en_rebaja === 1 ? parseFloat(productoReal.precio_rebaja) : parseFloat(productoReal.precio_venta);
+        totalReal += precioUsar * itemCliente.cantidad;
+        totalPiezas += itemCliente.cantidad;
       }
     });
 
-    // 5. Devolvemos la URL
-    const ticketUrl = response.transaction_details?.external_resource_url;
-    return NextResponse.json({ ticketUrl });
+    if (totalReal === 0) return NextResponse.json({ error: 'Carrito inválido o vacío' }, { status: 400 });
+
+    // 3. VALIDAMOS EL CUPÓN EN LA BASE DE DATOS
+    if (codigoDescuento) {
+      const resCupon = await fetch(`${BASE_URL}/cupones/validar/${codigoDescuento}`);
+      const dataCupon = await resCupon.json();
+      if (dataCupon.valido) {
+        // En tu lógica POS el descuento es por pieza
+        const descuentoTotal = parseFloat(dataCupon.descuento) * totalPiezas;
+        totalReal = totalReal - descuentoTotal;
+      }
+    }
+
+    if (totalReal < 0) totalReal = 0;
+
+    // 4. CREAMOS EL TICKET DE OXXO EN MERCADO PAGO DIRECTAMENTE
+    const response = await fetch("https://api.mercadopago.com/v1/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        transaction_amount: Number(totalReal.toFixed(2)), // Redondeo por seguridad financiera
+        description: "Compra en Tienda Web JP Jeans",
+        payment_method_id: "oxxo",
+        payer: { email: email }
+      })
+    });
+
+    const dataMP = await response.json();
+
+    // 5. DEVOLVEMOS LA URL DEL RECIBO Y EL ID AL CHECKOUT
+    if (dataMP.status === "pending" && dataMP.transaction_details?.external_resource_url) {
+      return NextResponse.json({
+        ticketUrl: dataMP.transaction_details.external_resource_url,
+        id: dataMP.id.toString() // 🚨 CRÍTICO PARA QUE EL WEBHOOK DE TU SERVIDOR LO RECONOZCA
+      });
+    } else {
+      console.error("Error MP:", dataMP);
+      return NextResponse.json({ error: 'Error generando el ticket en Mercado Pago' }, { status: 400 });
+    }
 
   } catch (error) {
-    return NextResponse.json({ error: 'Error generando referencia' }, { status: 500 });
+    console.error("Error en Ruta Mercado Pago:", error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

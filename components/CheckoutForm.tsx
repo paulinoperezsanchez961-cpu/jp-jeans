@@ -3,8 +3,14 @@
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 
-// Le indicamos al componente que ahora debe recibir el candado de seguridad (clientSecret)
-export default function CheckoutForm({ clientSecret }: { clientSecret: string }) {
+// 🚨 AQUÍ ESTÁ LA CORRECCIÓN: Declaramos que este componente recibe "clientSecret" y "onPagoExitoso"
+export default function CheckoutForm({ 
+  clientSecret, 
+  onPagoExitoso 
+}: { 
+  clientSecret: string, 
+  onPagoExitoso?: (id: string) => void 
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +28,7 @@ export default function CheckoutForm({ clientSecret }: { clientSecret: string })
     const cardElement = elements.getElement(CardNumberElement);
 
     if (cardElement) {
-      // 🔒 AQUÍ OCURRE LA MAGIA DE SEGURIDAD: 
-      // Confirmamos el pago cruzando la tarjeta con la intención de pago del backend.
+      // 🔒 Confirmamos el pago cruzando la tarjeta con la intención de pago del backend.
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
@@ -35,20 +40,15 @@ export default function CheckoutForm({ clientSecret }: { clientSecret: string })
         setError(error.message || 'Ocurrió un error al procesar la tarjeta.');
         setProcesando(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // ¡El dinero ya está seguro en tu cuenta de Stripe!
-        console.log('Pago seguro exitoso, ID:', paymentIntent.id);
-        alert('¡Pago autorizado y asegurado! El Cerebro registrará la venta.');
-        
-        // Aquí agregarías la lógica para vaciar el carrito y redirigir:
-        // clearCart();
-        // router.push('/gracias');
-        
-        setProcesando(false);
+        // 🚨 PAGO SEGURO Y EXITOSO: Disparamos la función que guarda la venta
+        if (onPagoExitoso) {
+          onPagoExitoso(paymentIntent.id);
+        }
       }
     }
   };
 
-  // Estilo minimalista para los 3 campos (INTACTO)
+  // Estilo minimalista para los 3 campos
   const ELEMENT_OPTIONS = {
     style: {
       base: {

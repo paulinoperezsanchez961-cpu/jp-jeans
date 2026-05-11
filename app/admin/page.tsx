@@ -47,7 +47,6 @@ const SECCIONES_BANNERS: Record<string, BannerConfig[]> = {
     { id: 'm_corte_skinny', titulo: 'Jeans: Skinny', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_colombiano', titulo: 'Jeans: Colombiano', tipo: 'tarjeta', aspect: 9/16 },
     { id: 'm_corte_barrel', titulo: 'Jeans: Barrel', tipo: 'tarjeta', aspect: 9/16 },
-    // 💡 CAMBIO CRÍTICO: Los banners dobles de mujer ahora piden foto para Celular (9:16) y PC (3:4)
     { id: 'm_sub_vestidos', titulo: 'Banner Doble: Vestidos', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
     { id: 'm_sub_faldas', titulo: 'Banner Doble: Faldas', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
     { id: 'm_sub_chamarras', titulo: 'Banner Doble: Chamarras', tipo: 'hero', aspectDesktop: 3/4, aspectMobile: 9/16 },
@@ -107,6 +106,10 @@ export default function AdminDashboard() {
   const [textosHombre, setTextosHombre] = useState({ titulo: '', descripcion: '' });
   const [textosMujer, setTextosMujer] = useState({ titulo: '', descripcion: '' });
 
+  // 🚨 ESTADOS: CONTROL DE OFERTAS (NUEVO)
+  const [editandoOferta, setEditandoOferta] = useState<number | null>(null);
+  const [precioRebaja, setPrecioRebaja] = useState<string>('');
+
   useEffect(() => {
     if (autenticado) {
       cargarInventario();
@@ -127,7 +130,6 @@ export default function AdminDashboard() {
       .then(data => { 
         if (data.exito) {
             setBannersData(data.banners); 
-            // Sincronizamos los textos si existen en el Cerebro
             if(data.banners.textos_hombre) setTextosHombre(data.banners.textos_hombre);
             if(data.banners.textos_mujer) setTextosMujer(data.banners.textos_mujer);
         }
@@ -312,7 +314,34 @@ export default function AdminDashboard() {
     }
   };
 
-  // 💡 LÓGICA PARA GUARDAR TEXTOS AL CEREBRO
+  // 🚨 LÓGICA PARA GUARDAR OFERTAS AL CEREBRO DIRECTAMENTE DESDE LA WEB
+  const guardarOferta = async (id: number, enRebaja: boolean, precioNuevo: string) => {
+    setCargando(true);
+    try {
+        const res = await fetch(`${BASE_URL}/oficina/productos/${id}/oferta`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                en_rebaja: enRebaja,
+                precio_rebaja: parseFloat(precioNuevo) || 0
+            })
+        });
+        const data = await res.json();
+        if (data.exito) {
+            alert(enRebaja ? "✅ Oferta activada" : "✅ Producto devuelto a precio original");
+            setEditandoOferta(null);
+            cargarInventario(); // Recargamos para que se refleje inmediatamente
+            if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+        } else {
+            alert("❌ Error: " + data.error);
+        }
+    } catch (e) {
+        alert("Error de conexión con el servidor");
+    } finally {
+        setCargando(false);
+    }
+  };
+
   const guardarTextos = async (seccionBD: string, datosTexto: any) => {
     setCargando(true);
     try {
@@ -354,7 +383,8 @@ export default function AdminDashboard() {
   const productosEnWeb = inventarioCrudo.filter(p => p.estado_web === 1);
 
   return (
-    <div className="h-screen w-full bg-white flex overflow-hidden font-sans text-black relative pt-16 md:pt-20">
+    // 🚨 AJUSTE MAESTRO DE LAYOUT: Se usa calc(100vh - 5rem) y mt-20 para esquivar el header sin romper el diseño
+    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] mt-16 md:mt-20 w-full bg-white flex overflow-hidden font-sans text-black relative">
       
       {/* COMPONENTE DE RECORTE */}
       <input type="file" accept="image/*" ref={archivoInputRef} onChange={onArchivoSeleccionado} className="hidden" />
@@ -504,12 +534,11 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 💡 PESTAÑA 2: TEXTOS DINÁMICOS */}
+          {/* PESTAÑA 2: TEXTOS DINÁMICOS */}
           {menuActivo === 'textos' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2">Textos de Colecciones</h3>
               
-              {/* Textos Hombre */}
               <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-black">Colección Hombre</span>
                   <input type="text" value={textosHombre.titulo} onChange={e => setTextosHombre({...textosHombre, titulo: e.target.value})} placeholder="Título de la página (Ej: La Colección Hombre)" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
@@ -517,7 +546,6 @@ export default function AdminDashboard() {
                   <button onClick={() => guardarTextos('textos_hombre', textosHombre)} disabled={cargando} className="bg-black text-white px-4 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gray-800 transition-colors">Guardar Textos Hombre</button>
               </div>
 
-              {/* Textos Mujer */}
               <div className="bg-white p-6 border border-gray-200 shadow-sm space-y-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-black">Colección Mujer</span>
                   <input type="text" value={textosMujer.titulo} onChange={e => setTextosMujer({...textosMujer, titulo: e.target.value})} placeholder="Título de la página (Ej: La Colección Mujer)" className="w-full border p-3 text-xs uppercase outline-none focus:border-black" />
@@ -611,24 +639,86 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* PESTAÑA 4: GESTIÓN */}
+          {/* 🚨 PESTAÑA 4: GESTIÓN WEB Y REBAJAS */}
           {menuActivo === 'gestion' && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-red-600">Control de Daños y Visibilidad</h3>
-              <div className="flex flex-col gap-2">
+              <h3 className="font-bold tracking-widest uppercase border-b border-gray-200 pb-2 text-black">Control de Inventario Web y Ofertas</h3>
+              <div className="flex flex-col gap-4">
                 {productosEnWeb.length === 0 ? (
                   <div className="p-8 text-center bg-gray-50 border border-gray-200"><p className="text-[10px] tracking-widest uppercase text-gray-400">No hay productos públicos en la web.</p></div>
                 ) : (
                   productosEnWeb.map((prod) => (
-                    <div key={prod.id} className="bg-white p-4 border border-gray-200 flex justify-between items-center shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <img src={getImgUrl(prod.url_foto_principal) || "https://via.placeholder.com/50"} alt={prod.nombre_web} className="w-12 h-16 object-cover bg-gray-100 border border-gray-200"/>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-[11px] uppercase tracking-wider">{prod.nombre_web || prod.nombre}</span>
-                          <span className="text-[9px] text-gray-400 tracking-widest uppercase">SKU: {prod.sku} | Bodega: {prod.stock_bodega} pzs</span>
+                    <div key={prod.id} className="bg-white p-4 border border-gray-200 flex flex-col shadow-sm gap-4 transition-all">
+                      
+                      {/* INFORMACIÓN DEL PRODUCTO Y BOTONES PRINCIPALES */}
+                      <div className="flex justify-between items-center w-full">
+                        <div className="flex items-center gap-4">
+                          <img src={getImgUrl(prod.url_foto_principal) || "https://via.placeholder.com/50"} alt={prod.nombre_web} className="w-12 h-16 object-cover bg-gray-100 border border-gray-200"/>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[11px] uppercase tracking-wider">{prod.nombre_web || prod.nombre}</span>
+                            <span className="text-[9px] text-gray-400 tracking-widest uppercase">SKU: {prod.sku} | Bodega: {prod.stock_bodega} pzs</span>
+                            
+                            {/* INDICADOR DE REBAJA ACTIVA */}
+                            {prod.en_rebaja === 1 && (
+                                <span className="text-[10px] text-red-600 font-bold uppercase tracking-widest mt-1">
+                                    En Rebaja: ${prod.precio_rebaja} MXN (Normal: ${prod.precio_venta})
+                                </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button 
+                              onClick={() => {
+                                  if (editandoOferta === prod.id) setEditandoOferta(null);
+                                  else {
+                                      setEditandoOferta(prod.id);
+                                      setPrecioRebaja(prod.precio_rebaja ? prod.precio_rebaja.toString() : '');
+                                  }
+                              }} 
+                              className={`border px-4 py-2 text-[9px] font-bold uppercase tracking-widest transition-colors ${prod.en_rebaja === 1 ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-gray-100 text-black border-gray-300 hover:bg-gray-200'}`}
+                          >
+                              {prod.en_rebaja === 1 ? 'Modificar Oferta' : 'Añadir Oferta'}
+                          </button>
+                          
+                          <button onClick={() => removerDeLaWeb(prod.id, prod.nombre_web || prod.nombre)} className="bg-white text-black border border-black px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors">Ocultar</button>
                         </div>
                       </div>
-                      <button onClick={() => removerDeLaWeb(prod.id, prod.nombre_web || prod.nombre)} className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors">Ocultar</button>
+
+                      {/* PANEL DESPLEGABLE PARA ACTIVAR/EDITAR OFERTA */}
+                      {editandoOferta === prod.id && (
+                          <div className="w-full bg-gray-50 border border-gray-200 p-4 flex items-end gap-4 mt-2 animate-in slide-in-from-top-2 duration-200">
+                              <div className="flex-1">
+                                  <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nuevo Precio de Rebaja ($)</label>
+                                  <input 
+                                      type="number" 
+                                      value={precioRebaja} 
+                                      onChange={e => setPrecioRebaja(e.target.value)} 
+                                      placeholder={`Precio Normal: $${prod.precio_venta}`} 
+                                      className="w-full border border-gray-300 p-2 text-xs outline-none focus:border-black bg-white" 
+                                  />
+                              </div>
+                              <div className="flex gap-2">
+                                  <button 
+                                      onClick={() => guardarOferta(prod.id, true, precioRebaja)} 
+                                      disabled={cargando || !precioRebaja}
+                                      className="bg-green-600 text-white px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-green-700 transition-colors disabled:opacity-50"
+                                  >
+                                      Activar Rebaja
+                                  </button>
+                                  {prod.en_rebaja === 1 && (
+                                      <button 
+                                          onClick={() => guardarOferta(prod.id, false, "0")} 
+                                          disabled={cargando}
+                                          className="bg-black text-white px-4 py-2 text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50"
+                                      >
+                                          Quitar Rebaja
+                                      </button>
+                                  )}
+                              </div>
+                          </div>
+                      )}
+
                     </div>
                   ))
                 )}

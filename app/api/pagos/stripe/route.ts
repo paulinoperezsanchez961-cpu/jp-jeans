@@ -1,51 +1,62 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Tu llave secreta de Stripe (la que empieza con sk_live_...)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
 
-// Simulamos tu BD segura
-const baseDeDatos = [
-  { id: 'JD-001', precio: 2499.00 },
-  { id: 'J-02', precio: 2799.00 },
-];
+const BASE_URL = 'https://api.jpjeansvip.com/api';
 
 export async function POST(request: Request) {
   try {
-    // 1. AHORA TAMBIÉN RECIBIMOS EL CÓDIGO DE DESCUENTO
     const { cart, codigoDescuento } = await request.json();
 
-    // 2. Recalculamos el precio original en el servidor
+    // 1. OBTENEMOS EL CATÁLOGO REAL DEL SERVIDOR
+    const resCatalogo = await fetch(`${BASE_URL}/web/catalogo`);
+    const dataCatalogo = await resCatalogo.json();
+    const catalogoReal = dataCatalogo.productos || [];
+
+    // 2. RECALCULAMOS EL PRECIO REAL Y SEGURO
     let totalReal = 0;
+    let totalPiezas = 0;
+
     cart.forEach((itemCliente: any) => {
-      const productoReal = baseDeDatos.find(p => p.id === itemCliente.id);
-      if (productoReal) totalReal += productoReal.precio * itemCliente.cantidad;
+      const productoReal = catalogoReal.find((p: any) => p.id === itemCliente.id);
+      if (productoReal) {
+        const precioUsar = productoReal.en_rebaja === 1 ? parseFloat(productoReal.precio_rebaja) : parseFloat(productoReal.precio_venta);
+        totalReal += precioUsar * itemCliente.cantidad;
+        totalPiezas += itemCliente.cantidad;
+      }
     });
 
-    if (totalReal === 0) return NextResponse.json({ error: 'Carrito inválido' }, { status: 400 });
+    if (totalReal === 0) return NextResponse.json({ error: 'Carrito inválido o vacío' }, { status: 400 });
 
-    // 3. APLICAMOS EL DESCUENTO DE MANERA SEGURA
-    if (codigoDescuento === 'ZERO30') {
-      totalReal = totalReal * 0.70; // 30% de descuento
-    } else if (codigoDescuento === 'VIP15') {
-      totalReal = totalReal * 0.85; // 15% de descuento
+    // 3. VALIDAMOS EL CUPÓN REAL EN LA BASE DE DATOS
+    if (codigoDescuento) {
+      const resCupon = await fetch(`${BASE_URL}/cupones/validar/${codigoDescuento}`);
+      const dataCupon = await resCupon.json();
+      
+      if (dataCupon.valido) {
+        const descuentoPorPieza = parseFloat(dataCupon.descuento);
+        const descuentoTotal = descuentoPorPieza * totalPiezas;
+        totalReal = totalReal - descuentoTotal;
+      }
     }
 
-    // 4. Stripe cobra en CENTAVOS. Multiplicamos por 100 el total ya con descuento.
+    if (totalReal < 0) totalReal = 0;
+
+    // 4. STRIPE COBRA EN CENTAVOS
     const montoEnCentavos = Math.round(totalReal * 100);
 
-    // 5. Creamos la Intención de Pago segura en Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: montoEnCentavos,
       currency: 'mxn',
     });
 
-    // 6. Devolvemos la llave
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
 
   } catch (error) {
-    return NextResponse.json({ error: 'Error con Stripe' }, { status: 500 });
+    console.error("Error Stripe:", error);
+    return NextResponse.json({ error: 'Error procesando el cobro seguro' }, { status: 500 });
   }
 }
