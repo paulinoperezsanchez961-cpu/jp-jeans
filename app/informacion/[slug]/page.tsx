@@ -18,8 +18,9 @@ function formatTitle(slug: string) {
   return titles[slug] || slug.toUpperCase().replace('-', ' ');
 }
 
-export default function InformationPage({ params }: { params: { slug: string } }) {
-  const title = formatTitle(params.slug);
+export default async function InformationPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const title = formatTitle(slug);
 
   return (
     <div className="bg-black min-h-screen text-white font-sans flex flex-col">
